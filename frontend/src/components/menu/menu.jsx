@@ -189,7 +189,7 @@ function Menu() {
               <h3 style={{fontSize: '14px', fontWeight: '700', color: '#1f2937', margin: '0 0 20px 0', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Quick Reference</h3>
               
               {/* Completion Tracking */}
-              <div style={{marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #e5e7eb', display: 'flex', alignItems: 'center', gap: '10px'}}>
+              <div style={{marginBottom: '24px', paddingBottom: '20px', borderBottom: '1px solid #1a5f3f', display: 'flex', alignItems: 'center', gap: '10px'}}>
                 <div style={{width: '24px', height: '24px', borderRadius: '50%', backgroundColor: completionPercentage === 100 ? '#1a5f3f' : '#e5e7eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700'}}>
                   {completionPercentage === 100 ? '✓' : '○'}
                 </div>
@@ -243,7 +243,7 @@ function Menu() {
               <>
                 {/* Section 1: Policy Information */}
                 <div style={{backgroundColor: 'white', borderRadius: '12px', padding: '24px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)'}}>
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '12px', borderBottom: '2px solid #f0f9ff'}}>
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '12px', borderBottom: '2px solid #1a5f3f'}}>
                     <h3 style={{fontSize: '14px', fontWeight: '700', color: '#1f2937', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px'}}>Policy Information</h3>
                     <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
                       <div style={{width: '24px', height: '24px', borderRadius: '50%', backgroundColor: isPolicyInfoComplete() ? '#1a5f3f' : '#e5e7eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700'}}>
@@ -351,7 +351,7 @@ function Menu() {
 
                 {/* Section 3: Vehicle Details */}
                 <div style={{backgroundColor: 'white', borderRadius: '12px', padding: '24px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)'}}>
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '12px', borderBottom: '2px solid #dbeafe'}}>
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '12px', borderBottom: '2px solid #1a5f3f'}}>
                     <h3 style={{fontSize: '14px', fontWeight: '700', color: '#1f2937', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px'}}>Vehicle Details</h3>
                     <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
                       <div style={{width: '24px', height: '24px', borderRadius: '50%', backgroundColor: isVehicleDetailsComplete() ? '#1a5f3f' : '#e5e7eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700'}}>
@@ -530,9 +530,9 @@ function Menu() {
                   </div>
                 </div>
 
-                <div style={{padding: '16px', backgroundColor: '#ffe4e6', borderRadius: '8px', borderLeft: '4px solid #ec4899'}}>
+                <div style={{padding: '16px', backgroundColor: '#dcfce7', borderRadius: '8px', borderLeft: '4px solid #1a5f3f'}}>
                   <p style={{fontSize: '12px', color: '#6b7280', margin: '0 0 8px 0'}}>Total Premium</p>
-                  <p style={{fontSize: '28px', fontWeight: '700', color: '#1f2937', margin: 0}}>₱{rates.total.toFixed(2)}</p>
+                  <p style={{fontSize: '28px', fontWeight: '700', color: '#1a5f3f', margin: 0}}>₱{rates.total.toFixed(2)}</p>
                 </div>
               </div>
             )}
