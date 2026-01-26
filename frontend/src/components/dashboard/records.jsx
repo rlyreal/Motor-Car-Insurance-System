@@ -1,15 +1,21 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../../styles/record.css";
 
 const Records = () => {
   const [searchInput, setSearchInput] = useState("");
+  const navigate = useNavigate();
+
+  const handleAddClick = () => {
+    navigate('/menu');
+  };
 
   return (
     <div className="container">
       {/* Top actions */}
       <div className="top-bar">
         <div></div>
-        <button className="btn add-btn">ADD</button>
+        <button className="btn add-btn" onClick={handleAddClick}>ADD</button>
       </div>
 
       {/* Search section */}

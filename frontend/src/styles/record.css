@@ -14,9 +14,23 @@
 /* Top bar */
 .top-bar {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  margin-bottom: 24px;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+
+.top-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827; /* dark gray */
+}
+
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .add-btn {
@@ -27,21 +41,41 @@
   font-size: 14px;
   letter-spacing: 0.5px;
   box-shadow: 0 10px 25px rgba(10, 64, 12, 0.3);
-  transition: all 0.3s ease;
+  transition: all 0.3s ease, opacity 220ms ease, transform 180ms ease, width 220ms ease, padding 180ms ease;
+  border: none;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+
+.add-btn.hidden {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+  pointer-events: none;
+  width: 0;         /* collapses horizontal space */
+  padding: 0;       /* remove internal spacing */
+  margin: 0;        /* remove external spacing */
+  overflow: hidden;
+  display: inline-block; /* preserve transition behavior */
 }
 
 .add-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 15px 35px rgba(10, 64, 12, 0.5);
+  background-color: #1e40af; /* stronger hover */
 }
 
-/* Search section */
-.search-bar {
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  margin-bottom: 24px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+/* Small screens: keep button visible under title */
+@media (max-width: 520px) {
+  .top-bar {
+    align-items: flex-start;
+  }
+  .top-actions {
+    width: 100%;
+    justify-content: flex-end;
+    margin-top: 6px;
+  }
 }
 
 .date-group {
@@ -69,16 +103,28 @@
 
 .field input {
   padding: 10px 12px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1.5px solid rgba(15, 23, 42, 0.12); /* stronger visible border */
+  border-radius: 10px;
   font-size: 14px;
-  transition: all 0.3s ease;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  transition: border-color 150ms ease, box-shadow 180ms ease, transform 120ms ease;
   outline: none;
 }
 
 .field input:focus {
-  border-color: #0A400C;
-  box-shadow: 0 0 0 3px rgba(10, 64, 12, 0.1);
+  border-color: var(--accent, #0f766e);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+/* Accessible focus-visible */
+.field input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.08);
+}
+
+/* Slightly bolder placeholder color for contrast */
+.field input::placeholder {
+  color: rgba(15,23,42,0.35);
 }
 
 .search-field {
@@ -90,39 +136,51 @@
   display: flex;
   gap: 8px;
   align-items: center;
+  flex-wrap: nowrap; /* ensure input + buttons stay on one line */
+  position: relative; /* allow absolute menu positioning inside */
 }
 
+/* allow the input to shrink properly inside flex without overflowing */
 .search-input {
   flex: 1;
+  min-width: 0;
   padding: 10px 12px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
+  border: 1.5px solid rgba(15, 23, 42, 0.12); /* stronger visible border */
+  border-radius: 10px;
   font-size: 14px;
-  transition: all 0.3s ease;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  transition: border-color 150ms ease, box-shadow 180ms ease, transform 120ms ease;
   outline: none;
 }
 
 .search-input:focus {
-  border-color: #0A400C;
-  box-shadow: 0 0 0 3px rgba(10, 64, 12, 0.1);
+  border-color: var(--accent, #0f766e);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
 }
 
+/* Accessible focus-visible */
+.search-input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.08);
+}
+
+/* Slightly bolder placeholder color for contrast */
+.search-input::placeholder {
+  color: rgba(15,23,42,0.35);
+}
+
+/* Keep Search button styling; retrieve-specific rules removed */
 .search-btn {
-  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
-  color: white;
-  padding: 10px 16px;
   height: 42px;
   flex-shrink: 0;
   font-weight: 600;
   font-size: 14px;
   white-space: nowrap;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+  color: white;
   box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
-  transition: all 0.3s ease;
-}
-
-.search-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
+  margin-left: 0;
 }
 
 /* Export buttons */
@@ -224,27 +282,318 @@ tbody tr:last-child td {
   border-bottom: none;
 }
 
+/* Reduce horizontal space beside action buttons and ensure last column is tight */
 .action-btn {
-  border: none;
-  background: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid transparent;
   cursor: pointer;
-  font-size: 18px;
-  margin-right: 12px;
-  transition: all 0.2s ease;
-  padding: 4px 8px;
+  transition: background 150ms ease, transform 120ms ease, box-shadow 150ms ease;
+  padding: 0;
+  margin-right: 8px; /* keep compact spacing */
+}
+
+/* color the SVG icons using currentColor */
+.action-btn svg {
+  width: 18px;
+  height: 18px;
+  color: #374151;
+  display: block;
+}
+
+/* hover / active states */
+.action-btn:hover {
+  background: rgba(15, 23, 42, 0.04);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(15, 23, 42, 0.06);
+}
+
+.action-btn:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* Specific accent colors */
+.view-btn svg {
+  color: #0f766e;
+}
+
+.view-btn:hover {
+  background: rgba(15, 118, 110, 0.06);
+}
+
+.edit-btn svg {
+  color: #0ea5e9;
+}
+
+.edit-btn:hover {
+  background: rgba(14, 165, 233, 0.06);
+}
+
+.delete-btn svg {
+  color: #ef4444;
+}
+
+.delete-btn:hover {
+  background: rgba(239, 68, 68, 0.06);
 }
 
 .action-btn:last-child {
   margin-right: 0;
+  padding-right: 0;
 }
 
-.action-btn:hover {
-  transform: scale(1.2);
-  opacity: 0.8;
+th:last-child,
+td:last-child {
+  white-space: nowrap;
+  width: 1%;
+  padding-right: 8px; /* reduce space to the right of the action cell */
 }
 
-.action-btn:active {
-  transform: scale(0.95);
+/* Pagination controls */
+.pagination {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 12px 4px 0;
+}
+
+.page-btn {
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  background: white;
+  color: #0f172a;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 120ms ease, transform 90ms ease, box-shadow 120ms ease;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: #f8fafc;
+  transform: translateY(-1px);
+}
+
+.page-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+  transform: none;
+}
+
+.page-btn.active {
+  background: linear-gradient(135deg, #0a400c, #0a400c);
+  color: white;
+  box-shadow: 0 6px 18px rgba(10, 64, 12, 0.12);
+}
+
+/* Modal / dialog styles */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  width: 720px;
+  max-width: calc(100% - 32px);
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 18px 60px rgba(2, 6, 23, 0.32);
+  overflow: hidden;
+  animation: slideFade 160ms cubic-bezier(.2, .9, .2, 1);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.04);
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.modal-close {
+  border: none;
+  background: transparent;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 6px;
+  color: #475569;
+}
+
+.modal-body {
+  padding: 18px 20px;
+  display: block;
+  gap: 12px;
+}
+
+.modal-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.modal-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-field label {
+  font-size: 12px;
+  color: #475569;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.modal-field input {
+  padding: 10px 12px;
+  border: 1.5px solid rgba(15, 23, 42, 0.12); /* stronger visible border */
+  border-radius: 10px;
+  font-size: 14px;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  transition: border-color 150ms ease, box-shadow 180ms ease, transform 120ms ease;
+  outline: none;
+}
+
+.modal-field input:focus {
+  border-color: var(--accent, #0f766e);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+/* Accessible focus-visible */
+.modal-field input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.08);
+}
+
+/* Slightly bolder placeholder color for contrast */
+.modal-field input::placeholder {
+  color: rgba(15,23,42,0.35);
+}
+
+.modal-value {
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  color: #0f172a;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px 18px;
+  border-top: 1px solid rgba(15, 23, 42, 0.04);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+}
+
+.modal-btn {
+  background: transparent;
+  color: #374151;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.modal-save {
+  background: linear-gradient(135deg, #0a400c, #0a400c);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+}
+
+/* Edit-mode enhancements for modal to improve visibility / contrast */
+.modal-edit {
+  border-left: 6px solid rgba(10,64,12,0.12); /* subtle accent on the card */
+}
+
+.modal-edit .modal-header {
+  background: linear-gradient(90deg, rgba(10,64,12,0.06), rgba(15,23,42,0.01));
+  border-bottom: 1px solid rgba(10,64,12,0.08);
+}
+
+.modal-edit .modal-header h3 {
+  color: var(--primary, #0a400c);
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+/* Clearer label color for edit mode */
+.modal-edit .modal-field label {
+  color: #08340a;
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+/* Tinted inputs and stronger focus */
+.modal-edit .modal-field input {
+  background: linear-gradient(180deg, #ffffff, #f7fbf7); /* very light green-tint */
+  border: 1.8px solid rgba(10,64,12,0.12);
+  box-shadow: 0 6px 20px rgba(10,64,12,0.04);
+  transition: box-shadow 160ms ease, border-color 140ms ease, transform 90ms ease;
+}
+
+.modal-edit .modal-field input:focus {
+  border-color: var(--primary, #0a400c);
+  box-shadow: 0 12px 30px rgba(10,64,12,0.12);
+  transform: translateY(-1px);
+}
+
+/* Make Save button in edit mode more prominent */
+.modal-edit .modal-actions .modal-save {
+  background: linear-gradient(135deg, var(--primary, #0a400c), #08340a);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 800;
+  box-shadow: 0 12px 30px rgba(10,64,12,0.16);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.modal-edit .modal-actions .modal-save:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 18px 40px rgba(10,64,12,0.18);
+}
+
+/* Slightly increase modal body spacing for edit readability */
+.modal-edit .modal-body {
+  padding: 22px 24px;
+  gap: 16px;
+}
+
+/* Ensure close button stands out but remains subtle */
+.modal-edit .modal-close {
+  color: #053012;
+  background: rgba(10,64,12,0.03);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+/* Accessibility: make input outlines clearly visible when keyboard-focused */
+.modal-edit .modal-field input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 6px rgba(15,118,110,0.08);
 }
 
 /* Responsive */
@@ -262,8 +611,11 @@ tbody tr:last-child td {
     width: 100%;
   }
 
-  .search-btn {
-    width: 100%;
+  /* keep inputs/buttons from being forced to 100% here;
+     they will naturally wrap if viewport is too narrow */
+  .search-input-group {
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
   .export-bar {
@@ -287,4 +639,376 @@ tbody tr:last-child td {
   .action-btn {
     margin-right: 8px;
   }
+}
+
+/* Modern UI overrides — append below existing rules */
+:root{
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --muted: #6b7280;
+  --primary: #0a400c;
+  --accent: #0f766e;
+  --danger: #ef4444;
+  --border: rgba(15,23,42,0.06);
+  --shadow-1: 0 6px 20px rgba(2,6,23,0.08);
+  --shadow-2: 0 12px 30px rgba(2,6,23,0.10);
+  --radius-lg: 14px;
+  --radius-md: 10px;
+  --radius-sm: 8px;
+  --glass: rgba(255,255,255,0.6);
+  --transition-fast: 150ms;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+
+/* Typography + background */
+html,body {
+  font-family: var(--font-sans);
+  background: linear-gradient(180deg, var(--bg), #eef2f7);
+  color: #0f172a;
+}
+
+/* Wrap container tightly and give subtle card offset */
+.container {
+  background: transparent;
+  padding: 28px;
+  min-height: auto; /* ensure it wraps content */
+}
+
+/* Card-like surfaces: search & table */
+.search-bar,
+.table-wrapper {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-1);
+  border: 1px solid var(--border);
+}
+
+/* Elevated header add button */
+.top-bar { gap: 12px; }
+.add-btn {
+  background: linear-gradient(135deg, var(--primary), #0a3b0b);
+  color: white;
+  padding: 10px 16px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(10,64,12,0.12);
+  font-weight: 600;
+  letter-spacing: 0.4px;
+}
+
+/* Inputs */
+.field input,
+.search-input,
+.modal-field input {
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  border: 1px solid rgba(15,23,42,0.06);
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+.field input:focus,
+.search-input:focus,
+.modal-field input:focus {
+  box-shadow: 0 6px 18px rgba(15,23,42,0.06);
+  border-color: var(--accent);
+}
+
+/* Buttons common */
+.btn {
+  border-radius: 10px;
+  padding: 9px 12px;
+  font-weight: 600;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+  box-shadow: none;
+}
+.btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-1); }
+
+/* Primary and accent buttons */
+.search-btn {
+  background: linear-gradient(135deg, var(--accent), #0b5e4f);
+  color: white;
+  padding: 10px 14px;
+  border-radius: 10px;
+}
+.excel-btn, .pdf-btn {
+  border-radius: 10px;
+  padding: 9px 14px;
+  box-shadow: none;
+}
+.excel-btn { background: linear-gradient(135deg,#0f7a36,#07461f); color:white; }
+.pdf-btn { background: linear-gradient(135deg,#d34b4b,#a71b1b); color:white; }
+
+/* Table: modern minimal look */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px; /* space between rows for card-like rows */
+  font-size: 14px;
+  color: #0f172a;
+}
+thead th {
+  background: transparent;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 12px;
+  padding: 10px 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+tbody tr {
+  background: linear-gradient(180deg, #fff, #fbfdff);
+  border-radius: 10px;
+  box-shadow: 0 6px 14px rgba(2,6,23,0.04);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  display: table-row;
+}
+tbody tr:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-2);
+}
+tbody td {
+  padding: 14px 12px;
+  border: none;
+  vertical-align: middle;
+}
+
+/* Make each row render as a "card" visually — adjust cell backgrounds so rounded corners show */
+tbody tr td:first-child { padding-left: 20px; }
+tbody tr td:last-child { padding-right: 20px; }
+
+/* Action icons are already modern; tweak spacing and focus styles */
+.action-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid transparent;
+}
+.action-btn:focus {
+  outline: none;
+  box-shadow: 0 4px 14px rgba(15,23,42,0.08);
+}
+
+/* Modal refinement */
+.modal {
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(2,6,23,0.28);
+}
+.modal-header h3 { font-size: 16px; letter-spacing: 0.2px; }
+.modal-close { color: var(--muted); }
+
+/* Pagination modern pills */
+.pagination {
+  padding-top: 14px;
+  justify-content: flex-end;
+}
+.page-btn {
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--muted);
+}
+.page-btn.active {
+  background: linear-gradient(135deg,var(--primary), #09410a);
+  color: white;
+  box-shadow: 0 8px 24px rgba(10,64,12,0.12);
+}
+.page-btn:hover:not(:disabled) {
+  background: rgba(15,23,42,0.04);
+  color: #0f172a;
+}
+
+/* Small screens: keep modern spacing */
+@media (max-width: 768px) {
+  .table-wrapper, .search-bar { padding: 14px; border-radius: 12px; }
+  tbody tr { display: block; border-radius: 12px; margin-bottom: 10px; }
+  tbody tr td { display: block; padding: 10px 12px; }
+  thead { display: none; } /* switch to card-per-row on mobile */
+  .pagination { justify-content: center; padding-top: 12px; }
+}
+
+/* Add page styles */
+.add-page {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0 36px;
+}
+
+.add-card {
+  width: 920px;
+  max-width: 100%;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, rgba(15,23,42,0.06));
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 10px 40px rgba(2,6,23,0.06);
+}
+
+/* header inside the add card */
+.add-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.add-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid rgba(15,23,42,0.06);
+  font-size: 18px;
+  color: #0f172a;
+  cursor: pointer;
+  transition: background 140ms ease, transform 120ms ease;
+}
+
+.add-back:hover { background: rgba(15,23,42,0.04); transform: translateY(-2px); }
+
+.add-head-text .add-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.add-sub {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--muted, #6b7280);
+}
+
+/* larger, two-column grid for add form */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 8px;
+}
+
+/* make sure full-width single item (like actions) spans both columns */
+.form-grid .field { display: flex; flex-direction: column; }
+.form-actions { grid-column: 1 / -1; display:flex; justify-content:flex-end; gap:12px; margin-top:8px; }
+
+/* slightly larger inputs for add page */
+.add-card .field input {
+  padding: 10px 12px;
+  border: 1.5px solid rgba(15, 23, 42, 0.12); /* stronger visible border */
+  border-radius: 10px;
+  font-size: 14px;
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  transition: border-color 150ms ease, box-shadow 180ms ease, transform 120ms ease;
+  outline: none;
+}
+
+.add-card .field input:focus {
+  border-color: var(--accent, #0f766e);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+/* Accessible focus-visible */
+.add-card .field input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.08);
+}
+
+/* Slightly bolder placeholder color for contrast */
+.add-card .field input::placeholder {
+  color: rgba(15,23,42,0.35);
+}
+
+/* emphasize Save button on add page */
+.add-card .modal-save {
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: linear-gradient(135deg,var(--primary,#0a400c), #08340a);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* ensure Cancel button is subtle */
+.add-card .modal-btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(15,23,42,0.06);
+  background: transparent;
+  color: #333;
+}
+
+/* responsive: switch to single column on smaller screens */
+@media (max-width: 920px) {
+  .add-card { width: calc(100% - 40px); padding: 18px; }
+  .form-grid { grid-template-columns: repeat(1, 1fr); }
+  .add-header { gap: 12px; }
+}
+
+@media (max-width: 480px) {
+  .add-back { width: 40px; height: 40px; font-size: 16px; }
+  .add-head-text .add-title { font-size: 18px; }
+  .add-sub { font-size: 12px; }
+}
+
+/* View-mode enhancements for modal to improve visibility / contrast */
+.modal-view .modal-header {
+  background: linear-gradient(90deg, rgba(15,23,42,0.03), rgba(15,23,42,0.01));
+  border-bottom: 1px solid rgba(15,23,42,0.06);
+}
+
+.modal-view .modal-header h3 {
+  color: #07131a; /* darker title for visibility */
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+/* Make labels clearer in view mode */
+.modal-view .modal-field label {
+  color: #0b1220; /* darker label */
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+/* Emphasize displayed values with stronger contrast and accent bar */
+.modal-view .modal-value.view-value {
+  background: linear-gradient(180deg, #ffffff, #f6fbf7);
+  color: #07131a; /* high contrast text */
+  font-weight: 700;
+  padding: 12px 14px;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.06);
+  border-left: 4px solid var(--accent, #0f766e);
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+/* Slightly larger font for better legibility */
+.modal-view .modal-value.view-value {
+  font-size: 15px;
+}
+
+/* Stronger close button contrast */
+.modal-view .modal-close {
+  color: #0f172a;
+  background: rgba(15,23,42,0.02);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+
+/* Ensure modal body spacing is comfortable for reading */
+.modal-view .modal-body {
+  padding: 20px 22px;
+  gap: 14px;
+}
+
+/* Improve focus state for accessibility in view mode */
+.modal-view .modal-close:focus,
+.modal-view .modal-value.view-value:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(15,118,110,0.08);
 }
