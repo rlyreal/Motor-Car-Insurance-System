@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/record.css";
-import { FiEye, FiEdit2, FiTrash2 } from "react-icons/fi";
+import { FiEye, FiEdit2, FiTrash2, FiDownload } from "react-icons/fi";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
 
 const Records = () => {
   const [searchInput, setSearchInput] = useState("");
@@ -11,17 +13,20 @@ const Records = () => {
     navigate('/menu');
   };
 
-  // Add users state and pagination state (show 5 users per page)
-  const [users, setUsers] = useState([
-    // sample users; replace with real data when available
-    { id: 1, name: "Sample Name 1", pn: "10001", cuc: "CUC001", or: "OR001", plate: "ABC-001" },
-    { id: 2, name: "Sample Name 2", pn: "10002", cuc: "CUC002", or: "OR002", plate: "ABC-002" },
-    { id: 3, name: "Sample Name 3", pn: "10003", cuc: "CUC003", or: "OR003", plate: "ABC-003" },
-    { id: 4, name: "Sample Name 4", pn: "10004", cuc: "CUC004", or: "OR004", plate: "ABC-004" },
-    { id: 5, name: "Sample Name 5", pn: "10005", cuc: "CUC005", or: "OR005", plate: "ABC-005" },
-    { id: 6, name: "Sample Name 6", pn: "10006", cuc: "CUC006", or: "OR006", plate: "ABC-006" },
-    { id: 7, name: "Sample Name 7", pn: "10007", cuc: "CUC007", or: "OR007", plate: "ABC-007" }
-  ]);
+  // Initialize users from localStorage submitted records
+  const [users, setUsers] = useState(() => {
+    const submittedRecords = JSON.parse(localStorage.getItem('submittedRecords')) || [];
+    const sampleUsers = [
+      { id: 1, name: "Sample Name 1", pn: "10001", cuc: "CUC001", or: "OR001", plate: "ABC-001" },
+      { id: 2, name: "Sample Name 2", pn: "10002", cuc: "CUC002", or: "OR002", plate: "ABC-002" },
+      { id: 3, name: "Sample Name 3", pn: "10003", cuc: "CUC003", or: "OR003", plate: "ABC-003" },
+      { id: 4, name: "Sample Name 4", pn: "10004", cuc: "CUC004", or: "OR004", plate: "ABC-004" },
+      { id: 5, name: "Sample Name 5", pn: "10005", cuc: "CUC005", or: "OR005", plate: "ABC-005" },
+      { id: 6, name: "Sample Name 6", pn: "10006", cuc: "CUC006", or: "OR006", plate: "ABC-006" },
+      { id: 7, name: "Sample Name 7", pn: "10007", cuc: "CUC007", or: "OR007", plate: "ABC-007" }
+    ];
+    return [...sampleUsers, ...submittedRecords];
+  });
 
   // items per page becomes selectable by admin (5 or 10)
   const [itemsPerPage, setItemsPerPage] = useState(5);
@@ -164,6 +169,101 @@ const Records = () => {
   // Common button style to remove borders
   const noBorderStyle = { border: "none" };
 
+  // Export to Excel
+  const exportToExcel = () => {
+    const tableData = users.map(user => ({
+      "Name": user.name,
+      "Policy Number": user.pn,
+      "COC Number": user.cuc,
+      "OR Number": user.or,
+      "Plate Number": user.plate
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(tableData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Records");
+    
+    // Set column widths
+    worksheet["!cols"] = [
+      { wch: 20 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 15 },
+      { wch: 15 }
+    ];
+
+    XLSX.writeFile(workbook, `Records_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
+
+  // Export to PDF
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    let yPosition = 20;
+
+    // Add title
+    doc.setFontSize(16);
+    doc.setFont(undefined, "bold");
+    doc.text("Records Report", pageWidth / 2, yPosition, { align: "center" });
+    yPosition += 15;
+
+    // Add date
+    doc.setFontSize(10);
+    doc.setFont(undefined, "normal");
+    doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, yPosition, { align: "center" });
+    yPosition += 12;
+
+    // Add table header
+    doc.setFontSize(11);
+    doc.setFont(undefined, "bold");
+    doc.setTextColor(240, 240, 240);
+    doc.setFillColor(15, 81, 50); // Dark green background
+    
+    const colWidths = [35, 30, 30, 30, 35];
+    const headers = ["Name", "Policy #", "COC #", "OR #", "Plate #"];
+    let xPosition = 15;
+
+    headers.forEach((header, index) => {
+      doc.rect(xPosition, yPosition, colWidths[index], 10, "F");
+      doc.text(header, xPosition + colWidths[index] / 2, yPosition + 7, { align: "center" });
+      xPosition += colWidths[index];
+    });
+
+    yPosition += 12;
+
+    // Add table data
+    doc.setFont(undefined, "normal");
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(9);
+
+    users.forEach((user, rowIndex) => {
+      if (yPosition > pageHeight - 20) {
+        doc.addPage();
+        yPosition = 20;
+      }
+
+      xPosition = 15;
+      const rowData = [user.name, user.pn, user.cuc, user.or, user.plate];
+      
+      // Alternate row colors
+      if (rowIndex % 2 === 0) {
+        doc.setFillColor(245, 245, 245);
+        doc.rect(15, yPosition, pageWidth - 30, 10, "F");
+      }
+
+      rowData.forEach((data, colIndex) => {
+        doc.text(String(data), xPosition + colWidths[colIndex] / 2, yPosition + 7, { align: "center" });
+        xPosition += colWidths[colIndex];
+      });
+
+      yPosition += 10;
+    });
+
+    // Save PDF
+    doc.save(`Records_${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
   return (
     <div className="container">
       {/* Top actions */}
@@ -171,6 +271,66 @@ const Records = () => {
         <div className="top-left">
           <h2 className="top-title">Records</h2>
           <button className="btn add-btn" onClick={handleAddClick} style={noBorderStyle}>ADD</button>
+        </div>
+        <div className="top-right" style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          <button 
+            className="btn export-btn" 
+            onClick={exportToExcel}
+            style={{
+              ...noBorderStyle,
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "8px 16px",
+              backgroundColor: "#10B981",
+              color: "white",
+              borderRadius: "4px",
+              fontSize: "14px",
+              fontWeight: "600",
+              cursor: "pointer",
+              transition: "all 0.3s"
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = "#059669";
+              e.target.style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = "#10B981";
+              e.target.style.transform = "translateY(0)";
+            }}
+            title="Export to Excel"
+          >
+            <FiDownload size={18} /> Excel
+          </button>
+          <button 
+            className="btn export-btn" 
+            onClick={exportToPDF}
+            style={{
+              ...noBorderStyle,
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "8px 16px",
+              backgroundColor: "#EF4444",
+              color: "white",
+              borderRadius: "4px",
+              fontSize: "14px",
+              fontWeight: "600",
+              cursor: "pointer",
+              transition: "all 0.3s"
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = "#DC2626";
+              e.target.style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = "#EF4444";
+              e.target.style.transform = "translateY(0)";
+            }}
+            title="Export to PDF"
+          >
+            <FiDownload size={18} /> PDF
+          </button>
         </div>
       </div>
 

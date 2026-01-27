@@ -170,9 +170,28 @@ function Menu() {
       
       setTimeout(() => {
         try {
+          // Save submitted record to localStorage
+          const submittedRecords = JSON.parse(localStorage.getItem('submittedRecords')) || [];
+          const newRecord = {
+            id: Date.now(),
+            name: formData.assured,
+            pn: formData.policyNumber,
+            cuc: formData.cocNumber,
+            or: formData.orNumber,
+            plate: formData.plateNo,
+            ...formData // Include all form data for detailed view
+          };
+          submittedRecords.push(newRecord);
+          localStorage.setItem('submittedRecords', JSON.stringify(submittedRecords));
+          
           console.log('Form submitted:', formData);
           setIsSubmitting(false);
           showToast('Form submitted successfully!', 'success');
+          
+          // Clear form data after successful submission
+          localStorage.removeItem('menuFormData');
+          localStorage.removeItem('menuCurrentStep');
+          localStorage.removeItem('menuRatesData');
           
           setTimeout(() => {
             navigate('/records');
