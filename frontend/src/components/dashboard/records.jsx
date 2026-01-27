@@ -144,33 +144,33 @@ const Records = () => {
   };
   // --- end modal / edit state & handlers ---
 
+  // Define header cell style with proper borders for sticky behavior
+  const headerStyle = {
+    position: "sticky",
+    top: 0,
+    backgroundColor: "#0f5132",
+    color: "#ffffff",
+    padding: "18px 16px",
+    fontSize: "14px",
+    fontWeight: "600",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+    zIndex: 10,
+    boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+    borderTop: "2px solid #0a3d25",
+    borderBottom: "2px solid #0a3d25"
+  };
+
+  // Common button style to remove borders
+  const noBorderStyle = { border: "none" };
+
   return (
     <div className="container">
       {/* Top actions */}
       <div className="top-bar">
         <div className="top-left">
           <h2 className="top-title">Records</h2>
-          <button className="btn add-btn" onClick={handleAddClick}>ADD</button>
-        </div>
-        <div className="top-right">
-          {/* page-size controls */}
-          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-            <span style={{ fontSize: 13, color: "#374151" }}>Show</span>
-            <button
-              className={`btn page-size-btn ${itemsPerPage === 5 ? "active" : ""}`}
-              onClick={() => { setItemsPerPage(5); setCurrentPage(1); }}
-              aria-pressed={itemsPerPage === 5}
-            >
-              5
-            </button>
-            <button
-              className={`btn page-size-btn ${itemsPerPage === 10 ? "active" : ""}`}
-              onClick={() => { setItemsPerPage(10); setCurrentPage(1); }}
-              aria-pressed={itemsPerPage === 10}
-            >
-              10
-            </button>
-          </div>
+          <button className="btn add-btn" onClick={handleAddClick} style={noBorderStyle}>ADD</button>
         </div>
       </div>
 
@@ -197,7 +197,7 @@ const Records = () => {
                 placeholder="Enter name or plate no..."
                 className="search-input"
               />
-              <button className="btn search-btn">
+              <button className="btn search-btn" style={noBorderStyle}>
                 🔍 Search
               </button>
             </div>
@@ -207,21 +207,21 @@ const Records = () => {
 
       {/* Export buttons */}
       <div className="export-bar">
-        <button className="btn excel-btn">Export Excel</button>
-        <button className="btn pdf-btn">Export PDF</button>
+        <button className="btn excel-btn" style={noBorderStyle}>Export Excel</button>
+        <button className="btn pdf-btn" style={noBorderStyle}>Export PDF</button>
       </div>
 
-      {/* Table */}
+      {/* Table with sticky header */}
       <div className="table-wrapper">
-        <table>
+        <table style={{ borderCollapse: "separate", borderSpacing: 0 }}>
           <thead>
             <tr>
-              <th>Name</th>
-              <th>PN</th>
-              <th>CUC</th>
-              <th>OR</th>
-              <th>Plate No</th>
-              <th>Action</th>
+              <th style={headerStyle}>NAME</th>
+              <th style={headerStyle}>PN</th>
+              <th style={headerStyle}>CUC</th>
+              <th style={headerStyle}>OR</th>
+              <th style={headerStyle}>PLATE NO</th>
+              <th style={headerStyle}>ACTION</th>
             </tr>
           </thead>
           <tbody>
@@ -239,6 +239,7 @@ const Records = () => {
                     title="View"
                     aria-label="View"
                     onClick={() => openView(u)}
+                    style={noBorderStyle}
                   >
                     <FiEye />
                   </button>
@@ -249,6 +250,7 @@ const Records = () => {
                     title="Edit"
                     aria-label="Edit"
                     onClick={() => openEdit(u)}
+                    style={noBorderStyle}
                   >
                     <FiEdit2 />
                   </button>
@@ -259,6 +261,7 @@ const Records = () => {
                     title="Delete"
                     aria-label="Delete"
                     onClick={() => openDeleteConfirm(u)}
+                    style={noBorderStyle}
                   >
                     <FiTrash2 />
                   </button>
@@ -269,6 +272,61 @@ const Records = () => {
         </table>
       </div>
 
+      {/* Pagination controls - Show and Page navigation on same line with proper alignment */}
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "space-between", 
+        alignItems: "center", 
+        marginTop: "16px" 
+      }}>
+        {/* Left: Show 5/10 */}
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <span style={{ fontSize: 13, color: "#374151" }}>Show</span>
+          <button
+            className={`btn page-size-btn ${itemsPerPage === 5 ? "active" : ""}`}
+            onClick={() => { setItemsPerPage(5); setCurrentPage(1); }}
+            aria-pressed={itemsPerPage === 5}
+            style={noBorderStyle}
+          >
+            5
+          </button>
+          <button
+            className={`btn page-size-btn ${itemsPerPage === 10 ? "active" : ""}`}
+            onClick={() => { setItemsPerPage(10); setCurrentPage(1); }}
+            aria-pressed={itemsPerPage === 10}
+            style={noBorderStyle}
+          >
+            10
+          </button>
+        </div>
+
+        {/* Right: Prev/Next navigation - aligned properly */}
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button className="page-btn" onClick={handlePrev} disabled={currentPage === 1} style={noBorderStyle}>
+            Prev
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => {
+            const page = i + 1;
+            return (
+              <button
+                key={page}
+                onClick={() => goToPage(page)}
+                className={`page-btn ${page === currentPage ? "active" : ""}`}
+                aria-current={page === currentPage ? "page" : undefined}
+                style={noBorderStyle}
+              >
+                {page}
+              </button>
+            );
+          })}
+
+          <button className="page-btn" onClick={handleNext} disabled={currentPage === totalPages} style={noBorderStyle}>
+            Next
+          </button>
+        </div>
+      </div>
+
       {/* Modal: view / edit / delete */}
       {modalOpen && (
         <div className="modal-backdrop" onClick={closeModal}>
@@ -277,7 +335,7 @@ const Records = () => {
               <h3>
                 {modalType === "view" ? "View Record" : modalType === "edit" ? "Edit Record" : "Delete Record"}
               </h3>
-              <button className="modal-close" onClick={closeModal} aria-label="Close">✕</button>
+              <button className="modal-close" onClick={closeModal} aria-label="Close" style={noBorderStyle}>✕</button>
             </div>
 
             <div className="modal-body">
@@ -330,44 +388,23 @@ const Records = () => {
             </div>
 
             <div className="modal-actions">
-              {modalType === "view" && <button className="modal-btn" onClick={closeModal}>Close</button>}
+              {modalType === "view" && <button className="modal-btn" onClick={closeModal} style={noBorderStyle}>Close</button>}
               {modalType === "edit" && (
                 <>
-                  <button className="modal-btn" onClick={closeModal}>Cancel</button>
-                  <button className="modal-save" onClick={handleSaveEdit}>Save</button>
+                  <button className="modal-btn" onClick={closeModal} style={noBorderStyle}>Cancel</button>
+                  <button className="modal-save" onClick={handleSaveEdit} style={noBorderStyle}>Save</button>
                 </>
               )}
               {modalType === "delete" && (
                 <>
-                  <button className="modal-btn" onClick={closeModal}>Cancel</button>
-                  <button className="modal-save modal-delete-btn" onClick={confirmDelete}>Delete</button>
+                  <button className="modal-btn" onClick={closeModal} style={noBorderStyle}>Cancel</button>
+                  <button className="modal-save modal-delete-btn" onClick={confirmDelete} style={noBorderStyle}>Delete</button>
                 </>
               )}
             </div>
           </div>
         </div>
       )}
-
-      {/* Pagination controls: use page numbers */}
-      <div className="pagination" style={{ marginTop: 12, display: "flex", gap: 8, alignItems: "center" }}>
-        <button className="btn" onClick={handlePrev} disabled={currentPage === 1}>Prev</button>
-
-        {Array.from({ length: totalPages }, (_, i) => {
-          const page = i + 1;
-          return (
-            <button
-              key={page}
-              onClick={() => goToPage(page)}
-              className={`btn ${page === currentPage ? "active" : ""}`}
-              aria-current={page === currentPage ? "page" : undefined}
-            >
-              {page}
-            </button>
-          );
-        })}
-
-        <button className="btn" onClick={handleNext} disabled={currentPage === totalPages}>Next</button>
-      </div>
     </div>
   );
 };
