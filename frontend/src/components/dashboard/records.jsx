@@ -21,9 +21,11 @@ const Records = () => {
     { id: 5, name: "Sample Name 5", pn: "10005", cuc: "CUC005", or: "OR005", plate: "ABC-005" },
     { id: 6, name: "Sample Name 6", pn: "10006", cuc: "CUC006", or: "OR006", plate: "ABC-006" },
     { id: 7, name: "Sample Name 7", pn: "10007", cuc: "CUC007", or: "OR007", plate: "ABC-007" }
+    
   ]);
 
-  const itemsPerPage = 5; // show 5 users per page
+  // items per page becomes selectable by admin (5 or 10)
+  const [itemsPerPage, setItemsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
 
   // total pages is number of groups of 5 (1 => up to 5 items, 2 => up to 10, etc.)
@@ -47,8 +49,30 @@ const Records = () => {
     <div className="container">
       {/* Top actions */}
       <div className="top-bar">
-        <div></div>
-        <button className="btn add-btn" onClick={handleAddClick}>ADD</button>
+        <div className="top-left">
+          <h2 className="top-title">Records</h2>
+          <button className="btn add-btn" onClick={handleAddClick}>ADD</button>
+        </div>
+        <div className="top-right">
+          {/* page-size controls */}
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <span style={{ fontSize: 13, color: "#374151" }}>Show</span>
+            <button
+              className={`btn page-size-btn ${itemsPerPage === 5 ? "active" : ""}`}
+              onClick={() => { setItemsPerPage(5); setCurrentPage(1); }}
+              aria-pressed={itemsPerPage === 5}
+            >
+              5
+            </button>
+            <button
+              className={`btn page-size-btn ${itemsPerPage === 10 ? "active" : ""}`}
+              onClick={() => { setItemsPerPage(10); setCurrentPage(1); }}
+              aria-pressed={itemsPerPage === 10}
+            >
+              10
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Search section */}
@@ -126,13 +150,12 @@ const Records = () => {
         </table>
       </div>
 
-      {/* Pagination controls: labels show cumulative counts (5, 10, 15, ...) */}
+      {/* Pagination controls: use page numbers */}
       <div className="pagination" style={{ marginTop: 12, display: "flex", gap: 8, alignItems: "center" }}>
         <button className="btn" onClick={handlePrev} disabled={currentPage === 1}>Prev</button>
 
         {Array.from({ length: totalPages }, (_, i) => {
           const page = i + 1;
-          const label = Math.min(page * itemsPerPage, users.length); // 5,10,15,... (clamped)
           return (
             <button
               key={page}
@@ -140,7 +163,7 @@ const Records = () => {
               className={`btn ${page === currentPage ? "active" : ""}`}
               aria-current={page === currentPage ? "page" : undefined}
             >
-              {label}
+              {page}
             </button>
           );
         })}

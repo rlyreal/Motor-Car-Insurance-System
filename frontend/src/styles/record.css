@@ -8,7 +8,7 @@
 .container {
   box-sizing: border-box;
   max-width: 1200px; /* fits typical laptop/desktop screens */
-  width: 100%;
+  width: calc(100% - 32px); /* always fit viewport with side padding */
   margin: 0 auto;
   padding: 16px;
   background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
@@ -21,52 +21,50 @@
 /* Optional: adjust table background so rows remain distinct (override if needed) */
 .table-wrapper { 
   width: 100%;
-  overflow-x: auto; /* horizontal scrolling on narrow viewports */
+  /* allow both directions to scroll; keep max-height so the list can scroll within the page */
+  max-height: 60vh; /* make table area scroll vertically on tall lists */
+  overflow-x: auto; /* allow horizontal scroll only if table cannot shrink further */
+  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   margin-top: 12px;
   background: linear-gradient(180deg, #f6fff6 0%, #e8f9e8 100%); /* light green surface */
   border-radius: 12px;
-  padding: 20px;
+  padding: 12px; /* tighten padding slightly to fit smaller screens */
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
-/* Top bar */
+/* Top bar: align left content (title + add button) and keep optional right area */
 .top-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-between; /* left group and optional right group */
   gap: 12px;
   margin: 12px 0;
-  flex-wrap: wrap; /* allow wrapping on smaller widths */
+  flex-wrap: wrap;
 }
 
-.top-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #111827; /* dark gray */
-}
-
-.top-actions {
+/* New left group containing title + add button */
+.top-left {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
 }
 
+/* Tone down add button size so it sits next to the title comfortably */
 .add-btn {
   background: linear-gradient(135deg, #0A400C 0%, #0A400C 100%);
   color: white;
-  padding: 12px 24px;
+  padding: 8px 12px; /* slightly smaller */
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   letter-spacing: 0.5px;
-  box-shadow: 0 10px 25px rgba(10, 64, 12, 0.3);
+  box-shadow: none; /* keep the flat look */
   transition: all 0.3s ease, opacity 220ms ease, transform 180ms ease, width 220ms ease, padding 180ms ease;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
 }
 
 .add-btn.hidden {
@@ -83,6 +81,21 @@
 .add-btn:hover {
   transform: translateY(-2px);
   background-color: #1e40af; /* stronger hover */
+}
+
+/* Small tweak: title styling */
+.top-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+/* Ensure previous styling for right-side controls remains usable */
+.top-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* Small screens: keep button visible under title */
@@ -245,11 +258,12 @@
 }
 
 /* Table */
-.table-wrapper table {
+.table-wrapper table,
+table {
   width: 100%;
   border-collapse: collapse;
   table-layout: auto; /* let columns size to content */
-  min-width: 600px; /* keep readable layout; scroll if viewport smaller */
+  min-width: 0; /* allow table to shrink below previous hard limits */
   font-size: 14px;
 }
 
@@ -278,6 +292,8 @@ th {
   font-size: 12px;
   vertical-align: middle;
   word-break: break-word;
+  white-space: normal; /* allow wrapping */
+  overflow-wrap: anywhere;
 }
 
 td {
@@ -286,6 +302,8 @@ td {
   color: #1f2937;
   vertical-align: middle;
   word-break: break-word;
+  white-space: normal; /* allow wrapping */
+  overflow-wrap: anywhere;
 }
 
 tbody tr {
@@ -415,6 +433,21 @@ td:last-child {
   background: linear-gradient(135deg, #0a400c, #0a400c);
   color: white;
   box-shadow: 0 6px 18px rgba(10, 64, 12, 0.12);
+}
+
+/* Page-size control buttons */
+.page-size-btn {
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  background: transparent;
+  border: 1px solid rgba(15,23,42,0.06);
+  color: #0f172a;
+}
+.page-size-btn.active {
+  background: linear-gradient(135deg,#0a400c,#08340a);
+  color: white;
+  border-color: transparent;
 }
 
 /* Desktop tweaks for larger screens */
@@ -697,7 +730,7 @@ td:last-child {
 
 /* Modern UI overrides — append below existing rules */
 :root{
-  --bg: #f4f6fb;
+  --bg: #e8f9e8; /* light green page background (changed from #f4f6fb) */
   --surface: #ffffff;
   --muted: #6b7280;
   --primary: #0a400c;
@@ -717,7 +750,7 @@ td:last-child {
 /* Typography + background */
 html,body {
   font-family: var(--font-sans);
-  background: linear-gradient(180deg, var(--bg), #eef2f7);
+  background: linear-gradient(180deg, var(--bg), #eefaf0); /* use light green variable */
   color: #0f172a;
 }
 
@@ -875,7 +908,7 @@ tbody tr td:last-child { padding-right: 20px; }
 
 /* Small screens: keep modern spacing */
 @media (max-width: 768px) {
-  .table-wrapper, .search-bar { padding: 14px; border-radius: 12px; }
+  .table-wrapper, .search-bar { padding: 12px; border-radius: 12px; }
   tbody tr { display: block; border-radius: 12px; margin-bottom: 10px; }
   tbody tr td { display: block; padding: 10px 12px; }
   thead { display: none; } /* switch to card-per-row on mobile */
@@ -1065,4 +1098,63 @@ tbody tr td:last-child { padding-right: 20px; }
 .modal-view .modal-value.view-value:focus {
   outline: none;
   box-shadow: 0 0 0 4px rgba(15,118,110,0.08);
+}
+
+/* Remove visual shadows and hover lifts from buttons for a flatter, more comfortable look */
+.btn,
+.add-btn,
+.search-btn,
+.excel-btn,
+.pdf-btn,
+.page-btn,
+.action-btn {
+  box-shadow: none !important;
+  transition: background 150ms ease; /* keep subtle hover color transitions */
+}
+
+/* Remove hover elevation/transform and any hover shadows */
+.btn:hover,
+.add-btn:hover,
+.search-btn:hover,
+.excel-btn:hover,
+.pdf-btn:hover,
+.page-btn:hover,
+.action-btn:hover {
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Remove active/pressed shadow effects */
+.btn:active,
+.add-btn:active,
+.search-btn:active,
+.excel-btn:active,
+.pdf-btn:active,
+.page-btn:active,
+.action-btn:active {
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* Keep focus visible for accessibility but without heavy shadow */
+.btn:focus,
+.action-btn:focus,
+.page-btn:focus {
+  outline: 2px solid rgba(15,118,110,0.12);
+  box-shadow: none !important;
+}
+
+/* Reduce padding on small screens so content fits */
+@media (max-width: 1024px) {
+  .container { width: calc(100% - 24px); padding: 12px; }
+  .table-wrapper { padding: 10px; max-height: 65vh; }
+  th, td { padding: 8px 8px; font-size: 13px; }
+  .search-input { min-width: 140px; }
+  .add-btn { padding: 8px 10px; font-size: 13px; }
+}
+
+/* Very large screens: give a bit more breathing room without forcing horizontal scroll */
+@media (min-width: 1600px) {
+  .container { max-width: 1400px; padding: 28px; }
+  th, td { padding: 12px 14px; font-size: 15px; }
 }
