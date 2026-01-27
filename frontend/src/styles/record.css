@@ -4,11 +4,30 @@
   box-sizing: border-box;
 }
 
+/* Make the records area a light green for the background */
 .container {
-  padding: 32px;
+  box-sizing: border-box;
+  max-width: 1200px; /* fits typical laptop/desktop screens */
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px;
   background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
   min-height: 100vh;
   font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  background-color: #e8f9e8; /* light green */
+  color: #0b3b0b; /* dark green text for contrast */
+}
+
+/* Optional: adjust table background so rows remain distinct (override if needed) */
+.table-wrapper { 
+  width: 100%;
+  overflow-x: auto; /* horizontal scrolling on narrow viewports */
+  -webkit-overflow-scrolling: touch;
+  margin-top: 12px;
+  background: linear-gradient(180deg, #f6fff6 0%, #e8f9e8 100%); /* light green surface */
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
 }
 
 /* Top bar */
@@ -18,7 +37,7 @@
   justify-content: space-between;
   gap: 12px;
   margin: 12px 0;
-  flex-wrap: wrap;
+  flex-wrap: wrap; /* allow wrapping on smaller widths */
 }
 
 .top-title {
@@ -138,12 +157,11 @@
   align-items: center;
   flex-wrap: nowrap; /* ensure input + buttons stay on one line */
   position: relative; /* allow absolute menu positioning inside */
+  width: 100%;
 }
-
-/* allow the input to shrink properly inside flex without overflowing */
 .search-input {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 240px; /* grow and shrink, reasonable min width */
+  min-width: 160px;
   padding: 10px 12px;
   border: 1.5px solid rgba(15, 23, 42, 0.12); /* stronger visible border */
   border-radius: 10px;
@@ -188,7 +206,7 @@
   margin: 24px 0;
   display: flex;
   gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: wrap; /* allow wrapping on smaller widths */
 }
 
 .excel-btn {
@@ -218,14 +236,6 @@
 
 .pdf-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(211, 47, 47, 0.4);
-}
-
-/* Buttons */
-.btn {
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
   font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   transition: all 0.3s ease;
 }
@@ -235,17 +245,11 @@
 }
 
 /* Table */
-.table-wrapper {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-  overflow-x: auto;
-}
-
-table {
+.table-wrapper table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: auto; /* let columns size to content */
+  min-width: 600px; /* keep readable layout; scroll if viewport smaller */
   font-size: 14px;
 }
 
@@ -254,28 +258,47 @@ thead {
   border-bottom: 2px solid #d1d5db;
 }
 
+thead th {
+  background: linear-gradient(180deg, rgba(232,249,232,0.9), rgba(232,249,232,0.7));
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 12px;
+  padding: 10px 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
 th {
-  padding: 16px;
+  padding: 8px 10px;
   text-align: left;
   font-weight: 700;
   color: #374151;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-size: 12px;
+  vertical-align: middle;
+  word-break: break-word;
 }
 
 td {
-  padding: 14px 16px;
+  padding: 8px 10px;
   border-bottom: 1px solid #e5e7eb;
   color: #1f2937;
+  vertical-align: middle;
+  word-break: break-word;
 }
 
 tbody tr {
-  transition: all 0.2s ease;
+  background: linear-gradient(180deg, #f7fff7 0%, #eefaf0 100%); /* soft green gradient */
+  border-radius: 10px;
+  box-shadow: 0 6px 14px rgba(2,6,23,0.04);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+  display: table-row;
 }
 
 tbody tr:hover {
-  background-color: #f9fafb;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(2,6,23,0.06);
 }
 
 tbody tr:last-child td {
@@ -294,8 +317,8 @@ tbody tr:last-child td {
   border: 1px solid transparent;
   cursor: pointer;
   transition: background 150ms ease, transform 120ms ease, box-shadow 150ms ease;
-  padding: 0;
-  margin-right: 8px; /* keep compact spacing */
+  padding: 6px;
+  margin-left: 6px;
 }
 
 /* color the SVG icons using currentColor */
@@ -304,6 +327,7 @@ tbody tr:last-child td {
   height: 18px;
   color: #374151;
   display: block;
+  vertical-align: middle;
 }
 
 /* hover / active states */
@@ -362,6 +386,7 @@ td:last-child {
   align-items: center;
   justify-content: flex-end;
   padding: 12px 4px 0;
+  flex-wrap: wrap; /* allow wrapping on smaller widths */
 }
 
 .page-btn {
@@ -390,6 +415,35 @@ td:last-child {
   background: linear-gradient(135deg, #0a400c, #0a400c);
   color: white;
   box-shadow: 0 6px 18px rgba(10, 64, 12, 0.12);
+}
+
+/* Desktop tweaks for larger screens */
+@media (min-width: 1024px) {
+  .container {
+    padding: 20px;
+  }
+  .table-wrapper table {
+    font-size: 15px;
+  }
+  .search-input {
+    min-width: 280px;
+  }
+}
+
+/* Small screens fallback (keeps usable on small laptop/very small screens) */
+@media (max-width: 700px) {
+  .btn {
+    padding: 6px 8px;
+    font-size: 13px;
+  }
+  .table-wrapper table {
+    font-size: 13px;
+    min-width: 520px;
+  }
+  .action-btn svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 /* Modal / dialog styles */
