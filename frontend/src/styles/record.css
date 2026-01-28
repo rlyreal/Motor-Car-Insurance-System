@@ -62,7 +62,8 @@
 
 /* Tone down add button size so it sits next to the title comfortably */
 .add-btn {
-  background: linear-gradient(135deg, #267d57 0%, #1e6b47 100%);
+  background: linear-gradient(135deg, #2ecc71, #059669);
+  box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
   color: #ffffff;
   padding: 14px 32px; /* more generous padding */
   font-weight: 800;
@@ -113,7 +114,7 @@
 
 .add-btn:hover {
   transform: translateY(-4px) scale(1.03);
-  background: linear-gradient(135deg, #2f9268 0%, #267d57 100%);
+  background: linear-gradient(135deg, #2f9268 0%, #00ff91 100%);
   box-shadow: 
     0 12px 36px rgba(0, 0, 0, 0.6), 
     0 6px 18px rgba(0, 0, 0, 0.5),
@@ -882,7 +883,8 @@ html,body {
 /* Elevated header add button */
 .top-bar { gap: 12px; }
 .add-btn {
-  background: linear-gradient(135deg, #267d57, #1e6b47);
+  background: linear-gradient(135deg, #059669, #059669);
+  box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
   color: #ffffff;
   padding: 14px 32px;
   border-radius: 12px;
