@@ -877,7 +877,7 @@ const Records = () => {
             style={{
               ...noBorderStyle,
               padding: "8px 16px",
-              backgroundColor: currentPage === 1 ? "#e5e7eb" : "#1e6b47",
+              backgroundColor: currentPage === 1 ? "#e5e7eb" : "#059669",
               color: currentPage === 1 ? "#9ca3af" : "white",
               borderRadius: "6px",
               fontSize: "14px",
@@ -900,7 +900,7 @@ const Records = () => {
                   ...noBorderStyle,
                   padding: "8px 12px",
                   minWidth: "40px",
-                  backgroundColor: currentPage === page ? "#165638" : "#1e6b47",
+                  backgroundColor: currentPage === page ? "#059669" : "#1e6b47",
                   color: "#ffffff",
                   borderRadius: "6px",
                   fontSize: "14px",
@@ -923,7 +923,7 @@ const Records = () => {
             style={{
               ...noBorderStyle,
               padding: "8px 16px",
-              backgroundColor: currentPage === totalPages ? "#e5e7eb" : "#1e6b47",
+              backgroundColor: currentPage === totalPages ? "#e5e7eb" : "#059669",
               color: currentPage === totalPages ? "#9ca3af" : "white",
               borderRadius: "6px",
               fontSize: "14px",
@@ -1229,7 +1229,7 @@ const Records = () => {
             </div>
           </div>
         </div>
-      )}x
+      )}
     </div>
   );
 };
