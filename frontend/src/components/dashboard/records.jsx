@@ -4,9 +4,11 @@ import "../../styles/record.css";
 import { FiEye, FiEdit2, FiTrash2, FiDownload } from "react-icons/fi";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
+import Toast from "../../common/toast";
 
 const Records = () => {
   const [searchInput, setSearchInput] = useState("");
+  const [toast, setToast] = useState(null);
   const navigate = useNavigate();
 
   const handleAddClick = () => {
@@ -54,6 +56,7 @@ const Records = () => {
   const [modalType, setModalType] = useState(null); // 'view' | 'edit' | 'delete'
   const [selectedUser, setSelectedUser] = useState(null);
   const [editData, setEditData] = useState(null);
+  const [deleteConfirmUser, setDeleteConfirmUser] = useState(null);
 
   const openView = (user) => {
     setSelectedUser(user);
@@ -68,63 +71,11 @@ const Records = () => {
     setModalOpen(true);
   };
 
-  // REPLACED: openDeleteConfirm now tries to load SweetAlert2 dynamically and falls back to window.confirm
-  const openDeleteConfirm = async (user) => {
-    try {
-      const Swal = (await import("sweetalert2")).default;
-      const result = await Swal.fire({
-        title: "Are you sure?",
-        html: `
-          <div style="display:flex;gap:12px;align-items:center">
-            <div style="width:52px;height:52px;border-radius:10px;background:#fff4f2;display:flex;align-items:center;justify-content:center;font-size:22px">🗑️</div>
-            <div style="text-align:left">
-              <div style="font-weight:600">${user.name}</div>
-              <div style="color:#6b7280;font-size:13px">This action cannot be undone.</div>
-            </div>
-          </div>
-        `,
-        icon: "warning",
-        showCancelButton: true,
-        confirmButtonText: "Yes, delete",
-        cancelButtonText: "Cancel",
-        customClass: {
-          popup: "swal2-modern-popup",
-          confirmButton: "swal2-confirm-btn",
-          cancelButton: "swal2-cancel-btn"
-        },
-        buttonsStyling: false,
-        reverseButtons: true
-      });
-
-      if (result.isConfirmed) {
-        setUsers((prev) => {
-          const newUsers = prev.filter((u) => u.id !== user.id);
-          setCurrentPage((p) => Math.min(p, Math.max(1, Math.ceil(newUsers.length / itemsPerPage))));
-          return newUsers;
-        });
-
-        Swal.fire({
-          toast: true,
-          position: "top-end",
-          icon: "success",
-          title: "Record deleted",
-          showConfirmButton: false,
-          timer: 1400
-        });
-      }
-    } catch (err) {
-      // fallback when sweetalert2 is not installed or import fails
-      const ok = window.confirm(`Delete record for "${user.name}"?\nThis action cannot be undone.`);
-      if (ok) {
-        setUsers((prev) => {
-          const newUsers = prev.filter((u) => u.id !== user.id);
-          setCurrentPage((p) => Math.min(p, Math.max(1, Math.ceil(newUsers.length / itemsPerPage))));
-          return newUsers;
-        });
-        // lightweight feedback
-        try { window.alert("Record deleted"); } catch {}
-      }
-    }
+  // UPDATED: Delete confirmation using Toast
+  const openDeleteConfirm = (user) => {
+    setDeleteConfirmUser(user);
+    setModalType("delete");
+    setModalOpen(true);
   };
 
   const closeModal = () => {
@@ -132,19 +83,24 @@ const Records = () => {
     setModalType(null);
     setSelectedUser(null);
     setEditData(null);
+    setDeleteConfirmUser(null);
   };
 
   const handleSaveEdit = () => {
     if (!editData) return;
     setUsers((prev) => prev.map((u) => (u.id === editData.id ? editData : u)));
+    setToast({ message: 'Record updated successfully!', type: 'success' });
     closeModal();
   };
 
   const confirmDelete = () => {
-    if (!selectedUser) return;
-    setUsers((prev) => prev.filter((u) => u.id !== selectedUser.id));
-    // adjust current page if needed
-    setCurrentPage((p) => Math.min(p, Math.max(1, Math.ceil((users.length - 1) / itemsPerPage))));
+    if (!deleteConfirmUser) return;
+    setUsers((prev) => {
+      const newUsers = prev.filter((u) => u.id !== deleteConfirmUser.id);
+      setCurrentPage((p) => Math.min(p, Math.max(1, Math.ceil(newUsers.length / itemsPerPage))));
+      return newUsers;
+    });
+    setToast({ message: 'Record deleted successfully!', type: 'success' });
     closeModal();
   };
   // --- end modal / edit state & handlers ---
@@ -193,6 +149,7 @@ const Records = () => {
     ];
 
     XLSX.writeFile(workbook, `Records_${new Date().toISOString().split('T')[0]}.xlsx`);
+    setToast({ message: 'Excel file exported successfully!', type: 'success' });
   };
 
   // Export to PDF
@@ -262,10 +219,22 @@ const Records = () => {
 
     // Save PDF
     doc.save(`Records_${new Date().toISOString().split('T')[0]}.pdf`);
+    setToast({ message: 'PDF file exported successfully!', type: 'success' });
   };
 
   return (
     <div className="container">
+      {/* Toast notification */}
+      {toast && (
+        <Toast 
+          message={toast.message} 
+          type={toast.type}
+          onClose={() => setToast(null)} 
+          duration={2000}
+          showProgress={true}
+        />
+      )}
+
       {/* Top actions */}
       <div className="top-bar">
         <div className="top-left">
@@ -292,11 +261,9 @@ const Records = () => {
             }}
             onMouseEnter={(e) => {
               e.target.style.backgroundColor = "#059669";
-              e.target.style.transform = "translateY(-2px)";
             }}
             onMouseLeave={(e) => {
               e.target.style.backgroundColor = "#10B981";
-              e.target.style.transform = "translateY(0)";
             }}
             title="Export to Excel"
           >
@@ -321,11 +288,9 @@ const Records = () => {
             }}
             onMouseEnter={(e) => {
               e.target.style.backgroundColor = "#DC2626";
-              e.target.style.transform = "translateY(-2px)";
             }}
             onMouseLeave={(e) => {
               e.target.style.backgroundColor = "#EF4444";
-              e.target.style.transform = "translateY(0)";
             }}
             title="Export to PDF"
           >
@@ -367,8 +332,8 @@ const Records = () => {
 
       {/* Export buttons */}
       <div className="export-bar">
-        <button className="btn excel-btn" style={noBorderStyle}>Export Excel</button>
-        <button className="btn pdf-btn" style={noBorderStyle}>Export PDF</button>
+        <button className="btn excel-btn" onClick={exportToExcel} style={noBorderStyle}>Export Excel</button>
+        <button className="btn pdf-btn" onClick={exportToPDF} style={noBorderStyle}>Export PDF</button>
       </div>
 
       {/* Table with sticky header */}
@@ -393,7 +358,6 @@ const Records = () => {
                 <td>{u.or}</td>
                 <td>{u.plate}</td>
                 <td>
-                  {/* view opens view modal */}
                   <button
                     className="action-btn view-btn"
                     title="View"
@@ -404,7 +368,6 @@ const Records = () => {
                     <FiEye />
                   </button>
 
-                  {/* edit opens edit modal */}
                   <button
                     className="action-btn edit-btn"
                     title="Edit"
@@ -415,7 +378,6 @@ const Records = () => {
                     <FiEdit2 />
                   </button>
 
-                  {/* delete opens stylish confirmation modal */}
                   <button
                     className="action-btn delete-btn"
                     title="Delete"
@@ -432,14 +394,13 @@ const Records = () => {
         </table>
       </div>
 
-      {/* Pagination controls - Show and Page navigation on same line with proper alignment */}
+      {/* Pagination controls */}
       <div style={{ 
         display: "flex", 
         justifyContent: "space-between", 
         alignItems: "center", 
         marginTop: "16px" 
       }}>
-        {/* Left: Show 5/10 */}
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <span style={{ fontSize: 13, color: "#374151" }}>Show</span>
           <button
@@ -460,7 +421,6 @@ const Records = () => {
           </button>
         </div>
 
-        {/* Right: Prev/Next navigation - aligned properly */}
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button className="page-btn" onClick={handlePrev} disabled={currentPage === 1} style={noBorderStyle}>
             Prev
@@ -534,13 +494,13 @@ const Records = () => {
                 </>
               )}
 
-              {modalType === "delete" && selectedUser && (
+              {modalType === "delete" && deleteConfirmUser && (
                 <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
                   <div style={{ flexShrink: 0 }}>
                     <div className="delete-icon" aria-hidden>🗑️</div>
                   </div>
                   <div>
-                    <p style={{ marginBottom: 8 }}>Are you sure you want to delete the record for <strong>{selectedUser.name}</strong>?</p>
+                    <p style={{ marginBottom: 8 }}>Are you sure you want to delete the record for <strong>{deleteConfirmUser.name}</strong>?</p>
                     <p style={{ margin: 0, color: "#6b7280", fontSize: 13 }}>This action cannot be undone.</p>
                   </div>
                 </div>
