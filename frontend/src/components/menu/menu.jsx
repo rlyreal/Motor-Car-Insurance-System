@@ -83,6 +83,8 @@ function Menu() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState(null);
+  const [clearFormConfirm, setClearFormConfirm] = useState(false);
+  const [touched, setTouched] = useState({});
   const [ratesData, setRatesData] = useState(() => {
     try {
       const savedRatesData = localStorage.getItem('menuRatesData');
@@ -137,10 +139,19 @@ function Menu() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    // Fields that should be uppercase on Info page
+    const uppercaseFields = ['assured', 'address', 'model', 'make', 'bodyType', 'color', 'mvFileNo', 'plateNo', 'serialChassisNo', 'motorNo'];
+    const finalValue = uppercaseFields.includes(name) ? value.toUpperCase() : value;
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: finalValue
     }));
+  };
+
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouched(prev => ({ ...prev, [name]: true }));
   };
 
   const handleBack = () => {
@@ -170,9 +181,28 @@ function Menu() {
       
       setTimeout(() => {
         try {
+          // Save submitted record to localStorage
+          const submittedRecords = JSON.parse(localStorage.getItem('submittedRecords')) || [];
+          const newRecord = {
+            id: Date.now(),
+            name: formData.assured,
+            pn: formData.policyNumber,
+            cuc: formData.cocNumber,
+            or: formData.orNumber,
+            plate: formData.plateNo,
+            ...formData // Include all form data for detailed view
+          };
+          submittedRecords.push(newRecord);
+          localStorage.setItem('submittedRecords', JSON.stringify(submittedRecords));
+          
           console.log('Form submitted:', formData);
           setIsSubmitting(false);
           showToast('Form submitted successfully!', 'success');
+          
+          // Clear form data after successful submission
+          localStorage.removeItem('menuFormData');
+          localStorage.removeItem('menuCurrentStep');
+          localStorage.removeItem('menuRatesData');
           
           setTimeout(() => {
             navigate('/records');
@@ -189,6 +219,49 @@ function Menu() {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleClearForm = () => {
+    if (!clearFormConfirm) {
+      showToast('Click Clear Form again to confirm', 'warning');
+      setClearFormConfirm(true);
+      setTimeout(() => setClearFormConfirm(false), 3000); // Reset after 3 seconds
+    } else {
+      const emptyFormData = {
+        assured: '',
+        address: '',
+        cocNumber: '',
+        orNumber: '',
+        policyNumber: '',
+        year: '2025',
+        dateIssued: '',
+        dateReceived: '',
+        agent: '',
+        subAgent: '',
+        region: '',
+        insuranceFromDate: '',
+        insuranceFromTime: '12:00',
+        insuranceToDate: '',
+        insuranceToTime: '12:00',
+        invoiceNumber: '',
+        cType: '',
+        model: '',
+        make: '',
+        bodyType: '',
+        color: '',
+        mvFileNo: '',
+        plateNo: '',
+        serialChassisNo: '',
+        motorNo: '',
+        authorizedCapacity: '',
+        unladenWeight: '',
+        weightClass: '',
+      };
+      setFormData(emptyFormData);
+      localStorage.removeItem('menuFormData');
+      showToast('Form cleared successfully', 'success');
+      setClearFormConfirm(false);
     }
   };
 
@@ -246,7 +319,7 @@ function Menu() {
   };
 
   return (
-    <div style={{minHeight: '100vh', backgroundColor: '#1E6B47', padding: '32px 16px'}}>
+    <div style={{minHeight: '100vh', backgroundColor: '#1E6B47', padding: '16px 16px'}}>
       <style>{`
         @keyframes fadeIn {
           from {
@@ -309,8 +382,8 @@ function Menu() {
       )}
       
       {/* Modern Header */}
-      <div style={{maxWidth: '1400px', margin: '0 auto', marginBottom: '32px'}}>
-        <div style={{background: 'transparent', borderRadius: '16px', padding: '40px', boxShadow: '0 8px 24px rgba(45, 80, 22, 0.12)', border: 'none', position: 'relative', overflow: 'visible'}}>
+      <div style={{maxWidth: '1400px', margin: '0 auto', marginBottom: '16px'}}>
+        <div style={{background: 'transparent', borderRadius: '16px', padding: '24px', boxShadow: '0 8px 24px rgba(45, 80, 22, 0.12)', border: 'none', position: 'relative', overflow: 'visible'}}>
           <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '32px', position: 'relative', zIndex: 1, flexDirection: 'column', textAlign: 'center'}}>
             <div style={{flexShrink: 0, backgroundColor: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
               <img src="/images/alpha.png" alt="Alpha Logo" style={{height: '65px', objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.08))'}} />
@@ -325,79 +398,120 @@ function Menu() {
         </div>
       </div>
 
-      {/* Timeline Progress Indicator - Full Width */}
-      <div style={{width: '100%', paddingTop: '16px', paddingBottom: '16px', marginBottom: '24px'}} role="progressbar" aria-valuenow={currentStep} aria-valuemin={1} aria-valuemax={3} aria-label={`Step ${currentStep} of 3`}>
+      {/* Timeline Progress Indicator - Enhanced Full Width */}
+      <div style={{width: '95%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '16px', paddingBottom: '16px', marginBottom: '24px'}} role="progressbar" aria-valuenow={currentStep} aria-valuemin={1} aria-valuemax={3} aria-label={`Step ${currentStep} of 3`}>
         <div style={{maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'center', alignItems: 'center', paddingX: '16px'}}>
-          <div style={{display: 'flex', alignItems: 'center', gap: '0', position: 'relative', width: '100%', maxWidth: '500px'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '0', position: 'relative', width: '100%', maxWidth: '1000px'}}>
             {[{label: 'Info', step: 1}, {label: 'Rates', step: 2}, {label: 'Review', step: 3}].map((step, idx) => (
               <div key={idx} style={{display: 'flex', alignItems: 'center', flex: 1, position: 'relative'}}>
-                {/* Timeline Line */}
+                {/* Enhanced Timeline Line */}
                 {idx > 0 && (
-                  <div style={{
-                    position: 'absolute',
-                    left: '-50%',
-                    top: '20px',
-                    width: '100%',
-                    height: '4px',
-                    backgroundColor: step.step - 1 < currentStep ? '#2D5016' : '#e5e7eb',
-                    transition: 'background-color 0.4s ease',
-                    zIndex: 0
-                  }} />
+                  <>
+                    <div style={{
+                      position: 'absolute',
+                      left: '-50%',
+                      top: '24px',
+                      width: '100%',
+                      height: '3px',
+                      backgroundColor: step.step - 1 < currentStep ? '#FFDB58' : '#d1d5db',
+                      transition: 'background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                      zIndex: 0,
+                      borderRadius: '2px'
+                    }} />
+                    <div style={{
+                      position: 'absolute',
+                      left: '-50%',
+                      top: '24px',
+                      width: step.step - 1 < currentStep ? '100%' : '0%',
+                      height: '3px',
+                      background: 'linear-gradient(90deg, #FFDB58 0%, #FFD93D 100%)',
+                      transition: 'width 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                      zIndex: 1,
+                      borderRadius: '2px',
+                      boxShadow: step.step - 1 < currentStep ? '0 2px 8px rgba(255, 219, 88, 0.4)' : 'none'
+                    }} />
+                  </>
                 )}
                 
-                {/* Step Circle */}
-                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', position: 'relative', zIndex: 1, width: '100%'}}>
+                {/* Enhanced Step Circle */}
+                <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', position: 'relative', zIndex: 2, width: '100%'}}>
                   <button
                     onClick={() => handleStepClick(step.step)}
                     disabled={step.step >= currentStep}
                     aria-label={`Go to step ${step.step}: ${step.label}`}
                     aria-current={step.step === currentStep ? 'step' : undefined}
                     style={{
-                      width: step.step === currentStep ? '56px' : '48px',
-                      height: step.step === currentStep ? '56px' : '48px',
+                      width: step.step === currentStep ? '60px' : '50px',
+                      height: step.step === currentStep ? '60px' : '50px',
                       borderRadius: '50%',
-                      backgroundColor: step.step <= currentStep ? '#FFDB58' : '#f0f0f0',
-                      color: step.step <= currentStep ? '#2D5016' : '#9ca3af',
+                      backgroundColor: step.step <= currentStep ? '#FFDB58' : '#ffffff',
+                      color: step.step <= currentStep ? '#2D5016' : '#d1d5db',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontWeight: '700',
-                      fontSize: step.step === currentStep ? '16px' : '14px',
+                      fontWeight: '800',
+                      fontSize: step.step === currentStep ? '18px' : '15px',
                       cursor: step.step < currentStep ? 'pointer' : 'default',
-                      transition: 'all 0.3s ease',
-                      border: step.step === currentStep ? '3px solid #2D5016' : '2px solid transparent',
-                      boxShadow: step.step === currentStep ? '0 6px 20px rgba(255, 219, 88, 0.3)' : step.step <= currentStep ? '0 3px 10px rgba(255, 219, 88, 0.2)' : 'none',
-                      ...((step.step === currentStep) && inputFocusStyle)
+                      transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      border: step.step === currentStep ? '4px solid #2D5016' : step.step < currentStep ? '3px solid #FFDB58' : '2px solid #e5e7eb',
+                      boxShadow: step.step === currentStep 
+                        ? '0 8px 24px rgba(255, 219, 88, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.4)' 
+                        : step.step < currentStep 
+                        ? '0 4px 12px rgba(255, 219, 88, 0.25)' 
+                        : '0 2px 8px rgba(0, 0, 0, 0.08)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      textShadow: step.step <= currentStep ? '0 1px 2px rgba(0, 0, 0, 0.1)' : 'none',
+                      background: step.step === currentStep 
+                        ? 'linear-gradient(135deg, #FFDB58 0%, #FFD93D 100%)' 
+                        : step.step < currentStep 
+                        ? 'linear-gradient(135deg, #FFDB58 0%, #FFC93D 100%)'
+                        : 'linear-gradient(135deg, #ffffff 0%, #f9fafb 100%)',
                     }}
                     onMouseEnter={(e) => {
                       if (step.step < currentStep) {
                         e.target.style.backgroundColor = '#FFC93D';
-                        e.target.style.transform = 'scale(1.1)';
-                        e.target.style.boxShadow = '0 8px 24px rgba(255, 219, 88, 0.4)';
+                        e.target.style.transform = 'scale(1.12) translateY(-3px)';
+                        e.target.style.boxShadow = '0 12px 32px rgba(255, 219, 88, 0.45), 0 2px 8px rgba(45, 80, 22, 0.2)';
+                      } else if (step.step === currentStep) {
+                        e.target.style.transform = 'scale(1.08) translateY(-2px)';
+                        e.target.style.boxShadow = '0 12px 32px rgba(255, 219, 88, 0.45), inset 0 2px 4px rgba(255, 255, 255, 0.4)';
                       }
                     }}
                     onMouseLeave={(e) => {
+                      e.target.style.transform = 'scale(1) translateY(0)';
+                      e.target.style.boxShadow = step.step === currentStep 
+                        ? '0 8px 24px rgba(255, 219, 88, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.4)' 
+                        : step.step < currentStep 
+                        ? '0 4px 12px rgba(255, 219, 88, 0.25)' 
+                        : '0 2px 8px rgba(0, 0, 0, 0.08)';
                       if (step.step < currentStep) {
                         e.target.style.backgroundColor = '#FFDB58';
-                        e.target.style.transform = 'scale(1)';
-                        e.target.style.boxShadow = '0 3px 10px rgba(255, 219, 88, 0.2)';
                       }
                     }}
                     onFocus={(e) => {
-                      e.target.style.boxShadow = '0 0 0 4px rgba(255, 219, 88, 0.6)';
+                      e.target.style.boxShadow = step.step === currentStep 
+                        ? '0 0 0 4px rgba(255, 219, 88, 0.6), 0 8px 24px rgba(255, 219, 88, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.4)'
+                        : '0 0 0 4px rgba(255, 219, 88, 0.4), 0 4px 12px rgba(255, 219, 88, 0.25)';
                     }}
                     onBlur={(e) => {
-                      e.target.style.boxShadow = step.step === currentStep ? '0 6px 20px rgba(255, 219, 88, 0.3)' : step.step <= currentStep ? '0 3px 10px rgba(255, 219, 88, 0.2)' : 'none';
+                      e.target.style.boxShadow = step.step === currentStep 
+                        ? '0 8px 24px rgba(255, 219, 88, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.4)' 
+                        : step.step < currentStep 
+                        ? '0 4px 12px rgba(255, 219, 88, 0.25)' 
+                        : '0 2px 8px rgba(0, 0, 0, 0.08)';
                     }}
                   >
                     {step.step < currentStep ? '✓' : step.step}
                   </button>
                   <span style={{
-                    fontSize: step.step === currentStep ? '14px' : '13px',
-                    fontWeight: step.step === currentStep ? '800' : '700',
+                    fontSize: step.step === currentStep ? '13px' : '12px',
+                    fontWeight: step.step === currentStep ? '800' : step.step < currentStep ? '700' : '600',
                     color: step.step <= currentStep ? '#FFDB58' : '#9ca3af',
-                    transition: 'all 0.3s ease',
-                    whiteSpace: 'nowrap'
+                    transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    whiteSpace: 'nowrap',
+                    letterSpacing: step.step === currentStep ? '0.5px' : '0px',
+                    textTransform: step.step === currentStep ? 'uppercase' : 'capitalize',
                   }}>
                     {step.label}
                   </span>
@@ -414,36 +528,46 @@ function Menu() {
           {/* Left Sidebar - Hidden on Rates and Review Steps */}
           {currentStep !== 2 && currentStep !== 3 && (
           <div style={stepTransitionStyle}>
-            <div style={{backgroundColor: 'white', borderRadius: '12px', padding: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', border: '1px solid #e5e7eb'}} onMouseEnter={(e) => {
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(45, 80, 22, 0.1)';
-              e.currentTarget.style.borderColor = '#d1d5db';
+            <div style={{
+              background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)', 
+              borderRadius: '12px', 
+              padding: '20px', 
+              boxShadow: '0 2px 8px rgba(45, 80, 22, 0.08)', 
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
+              border: '2px solid #5A8C3A'
+            }} onMouseEnter={(e) => {
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(45, 80, 22, 0.12)';
+              e.currentTarget.style.borderColor = '#2D5016';
             }} onMouseLeave={(e) => {
-              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
-              e.currentTarget.style.borderColor = '#e5e7eb';
+              e.currentTarget.style.boxShadow = '0 2px 8px rgba(45, 80, 22, 0.08)';
+              e.currentTarget.style.borderColor = '#5A8C3A';
             }}>
-              <div style={{display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px'}}>
-                <div style={{width: '4px', height: '24px', backgroundColor: '#2D5016', borderRadius: '2px'}}></div>
-                <h3 style={{fontSize: '13px', fontWeight: '700', color: '#2D5016', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px'}}>Quick Reference</h3>
+              <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px'}}>
+                <div style={{width: '5px', height: '28px', backgroundColor: '#2D5016', borderRadius: '3px'}}></div>
+                <h3 style={{fontSize: '14px', fontWeight: '800', color: '#2D5016', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px'}}>Quick Reference</h3>
               </div>
               
               {/* Completion Tracking */}
-              <div style={{marginBottom: '16px', paddingBottom: '16px', borderBottom: '2px solid #1a5f3f', display: 'flex', alignItems: 'center', gap: '10px'}} aria-live="polite" aria-label={`Quick Reference completion status: ${completionPercentage === 100 ? 'Complete' : 'Incomplete'}`}>
-                <div style={{width: '28px', height: '28px', borderRadius: '50%', backgroundColor: completionPercentage === 100 ? '#1a5f3f' : '#e5e7eb', color: completionPercentage === 100 ? 'white' : '#9ca3af', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px', fontWeight: '700', transition: 'all 0.3s ease'}} aria-hidden="true">
-                  {completionPercentage === 100 ? '✓' : '○'}
+              <div style={{marginBottom: '16px', paddingBottom: '16px', borderBottom: '2px solid #5A8C3A', display: 'flex', alignItems: 'center', justifyContent: 'flex-end'}} aria-live="polite" aria-label={`Quick Reference completion status: ${completionPercentage === 100 ? 'Complete' : 'Incomplete'}`}>
+                <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                  <div style={{width: '24px', height: '24px', borderRadius: '50%', backgroundColor: completionPercentage === 100 ? '#1a5f3f' : '#e5e7eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700'}} aria-hidden="true">
+                    {completionPercentage === 100 ? '✓' : '○'}
+                  </div>
+                  <span style={{fontSize: '12px', color: completionPercentage === 100 ? '#1a5f3f' : '#d1d5db', fontWeight: '600'}}>
+                    {completionPercentage === 100 ? 'Complete' : 'Incomplete'}
+                  </span>
                 </div>
-                <span style={{fontSize: '13px', color: completionPercentage === 100 ? '#1a5f3f' : '#d1d5db', fontWeight: '600', transition: 'all 0.3s ease'}}>
-                  {completionPercentage === 100 ? 'Complete' : 'Incomplete'}
-                </span>
               </div>
               
               <div style={{marginBottom: '16px'}}>
-                <label htmlFor="assured-input" style={{fontSize: '11px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px'}}>Assured <span style={{color: '#ef4444'}}>*</span></label>
+                <label htmlFor="assured-input" style={{fontSize: '11px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px'}}>Assured <span style={{color: '#ef4444'}}>*</span></label>
                 <input 
                   id="assured-input"
                   type="text" 
                   name="assured"
                   value={formData.assured}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   placeholder="Enter assured name"
                   aria-label="Assured name - required"
                   aria-required="true"
@@ -452,23 +576,22 @@ function Menu() {
                     e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                     e.target.style.backgroundColor = '#f8fdf9';
                   }}
-                  onBlur={(e) => {
-                    e.target.style.boxShadow = '';
-                    e.target.style.borderColor = '#d1d5db';
-                    e.target.style.backgroundColor = '#ffffff';
-                  }}
-                  style={inputBaseStyle}
+                  style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: touched.assured && !formData.assured ? '#ef4444' : inputBaseStyle.borderColor}}
                 />
+                {touched.assured && !formData.assured && (
+                  <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
+                )}
               </div>
 
               <div style={{marginBottom: '16px'}}>
-                <label htmlFor="address-input" style={{fontSize: '11px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px'}}>Address <span style={{color: '#ef4444'}}>*</span></label>
+                <label htmlFor="address-input" style={{fontSize: '11px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px'}}>Address <span style={{color: '#ef4444'}}>*</span></label>
                 <input 
                   id="address-input"
                   type="text" 
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   placeholder="Enter address"
                   aria-label="Address - required"
                   aria-required="true"
@@ -477,18 +600,16 @@ function Menu() {
                     e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                     e.target.style.backgroundColor = '#f8fdf9';
                   }}
-                  onBlur={(e) => {
-                    e.target.style.boxShadow = '';
-                    e.target.style.borderColor = '#d1d5db';
-                    e.target.style.backgroundColor = '#ffffff';
-                  }}
-                  style={inputBaseStyle}
+                  style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: touched.address && !formData.address ? '#ef4444' : inputBaseStyle.borderColor}}
                 />
+                {touched.address && !formData.address && (
+                  <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
+                )}
               </div>
 
               <div style={{display: 'flex', gap: '12px'}}>
                 <div style={{flex: 1}}>
-                  <label htmlFor="coc-number-input" style={{fontSize: '11px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px'}}>COC Number <span style={{color: '#ef4444'}}>*</span></label>
+                  <label htmlFor="coc-number-input" style={{fontSize: '11px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px'}}>COC Number <span style={{color: '#ef4444'}}>*</span></label>
                   <input 
                     id="coc-number-input"
                     type="text" 
@@ -498,6 +619,7 @@ function Menu() {
                       const value = e.target.value.replace(/[^0-9]/g, '');
                       setFormData(prev => ({ ...prev, cocNumber: value }));
                     }}
+                    onBlur={handleBlur}
                     placeholder="Enter COC no."
                     aria-label="COC Number - numbers only - required"
                     aria-required="true"
@@ -507,17 +629,15 @@ function Menu() {
                       e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                       e.target.style.backgroundColor = '#f8fdf9';
                     }}
-                    onBlur={(e) => {
-                      e.target.style.boxShadow = '';
-                      e.target.style.borderColor = '#d1d5db';
-                      e.target.style.backgroundColor = '#ffffff';
-                    }}
-                    style={inputBaseStyle}
+                    style={{...inputBaseStyle, borderColor: touched.cocNumber && !formData.cocNumber ? '#ef4444' : inputBaseStyle.borderColor}}
                   />
+                  {touched.cocNumber && !formData.cocNumber && (
+                    <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
+                  )}
                 </div>
 
                 <div style={{flex: 1}}>
-                  <label htmlFor="or-number-input" style={{fontSize: '11px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px'}}>OR Number</label>
+                  <label htmlFor="or-number-input" style={{fontSize: '11px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px'}}>OR Number <span style={{color: '#ef4444'}}>*</span></label>
                   <input 
                     id="or-number-input"
                     type="text" 
@@ -527,6 +647,7 @@ function Menu() {
                       const value = e.target.value.replace(/[^0-9]/g, '');
                       setFormData(prev => ({ ...prev, orNumber: value }));
                     }}
+                    onBlur={handleBlur}
                     placeholder="Enter OR no."
                     aria-label="OR Number - numbers only"
                     inputMode="numeric"
@@ -535,13 +656,11 @@ function Menu() {
                       e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                       e.target.style.backgroundColor = '#f8fdf9';
                     }}
-                    onBlur={(e) => {
-                      e.target.style.boxShadow = '';
-                      e.target.style.borderColor = '#d1d5db';
-                      e.target.style.backgroundColor = '#ffffff';
-                    }}
-                    style={inputBaseStyle}
+                    style={{...inputBaseStyle, borderColor: touched.orNumber && !formData.orNumber ? '#ef4444' : inputBaseStyle.borderColor}}
                   />
+                  {touched.orNumber && !formData.orNumber && (
+                    <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -552,33 +671,60 @@ function Menu() {
           <div>
             {/* STEP 1: Info */}
             {currentStep === 1 && (
-              <div style={stepTransitionStyle}>
+              <div style={{
+                ...stepTransitionStyle, 
+                background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)', 
+                borderRadius: '12px', 
+                padding: '28px', 
+                marginBottom: '20px', 
+                boxShadow: '0 3px 12px rgba(45, 80, 22, 0.08)', 
+                maxWidth: '1000px', 
+                margin: '0 auto 20px', 
+                transition: 'all 0.3s ease', 
+                border: '2px solid rgba(90, 140, 58, 0.15)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(45, 80, 22, 0.12)';
+                e.currentTarget.style.borderColor = 'rgba(90, 140, 58, 0.3)';
+              }} 
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = '0 4px 16px rgba(45, 80, 22, 0.08)';
+                e.currentTarget.style.borderColor = 'rgba(90, 140, 58, 0.15)';
+              }}>
+                
                 {/* Section 1: Policy Information */}
-                <div style={{backgroundColor: 'white', borderRadius: '12px', padding: '20px', marginBottom: '20px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', transition: 'all 0.3s ease', border: '1px solid #e5e7eb'}} onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(45, 80, 22, 0.08)';
-                  e.currentTarget.style.borderColor = '#d1d5db';
-                }} onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
-                  e.currentTarget.style.borderColor = '#e5e7eb';
+                <div style={{
+                  marginBottom: '10px', 
+                  padding: '15px', 
+                  background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)',
+                  borderRadius: '10px', 
+                  border: '1px solid rgba(90, 140, 58, 0.2)'
                 }}>
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingBottom: '12px', borderBottom: '2px solid #1a5f3f', position: 'relative'}}>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-                      <div style={{width: '4px', height: '24px', backgroundColor: '#2D5016', borderRadius: '2px'}}></div>
-                      <h3 style={{fontSize: '13px', fontWeight: '700', color: '#1f2937', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px'}}>Policy Information</h3>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px'}}>
+                    <div style={{width: '4px', height: '22px', backgroundColor: '#5A8C3A', borderRadius: '2px'}}></div>
+                    <h4 style={{
+                      fontSize: '13px', 
+                      fontWeight: '700', 
+                      color: '#2D5016', 
+                      margin: 0, 
+                      textTransform: 'uppercase', 
+                      letterSpacing: '0.3px'
+                    }}>
+                      Policy Information
+                    </h4>
+                  </div>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px'}} aria-live="polite" aria-label={`Policy Information: ${isPolicyInfoComplete() ? 'Complete' : 'Incomplete'}`}>
+                    <div style={{width: '24px', height: '24px', borderRadius: '50%', backgroundColor: isPolicyInfoComplete() ? '#1a5f3f' : '#e5e7eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700'}} aria-hidden="true">
+                      {isPolicyInfoComplete() ? '✓' : '○'}
                     </div>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '8px'}} aria-live="polite" aria-label={`Policy Information: ${isPolicyInfoComplete() ? 'Complete' : 'Incomplete'}`}>
-                      <div style={{width: '24px', height: '24px', borderRadius: '50%', backgroundColor: isPolicyInfoComplete() ? '#1a5f3f' : '#e5e7eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700'}} aria-hidden="true">
-                        {isPolicyInfoComplete() ? '✓' : '○'}
-                      </div>
-                      <span style={{fontSize: '12px', color: isPolicyInfoComplete() ? '#1a5f3f' : '#d1d5db', fontWeight: '600'}}>
-                        {isPolicyInfoComplete() ? 'Complete' : 'Incomplete'}
-                      </span>
-                    </div>
+                    <span style={{fontSize: '12px', color: isPolicyInfoComplete() ? '#1a5f3f' : '#d1d5db', fontWeight: '600'}}>
+                      {isPolicyInfoComplete() ? 'Complete' : 'Incomplete'}
+                    </span>
                   </div>
                   
                   <div style={{display: 'grid', gridTemplateColumns: '80px 1fr 120px 150px 150px', gap: '16px', alignItems: 'flex-end'}}>
                     <div>
-                      <label htmlFor="type-select" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>Type</label>
+                      <label htmlFor="type-select" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Type <span style={{color: '#ef4444'}}>*</span></label>
                       <select id="type-select" name="cType" value={formData.cType} onChange={handleChange} aria-label="Policy type" onFocus={(e) => {
                         e.target.style.borderColor = '#1a5f3f';
                         e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
@@ -587,7 +733,7 @@ function Menu() {
                         e.target.style.boxShadow = '';
                         e.target.style.borderColor = '#d1d5db';
                         e.target.style.backgroundColor = '#ffffff';
-                      }} style={inputBaseStyle}>
+                      }} style={{...inputBaseStyle, borderColor: touched.cType && !formData.cType ? '#ef4444' : inputBaseStyle.borderColor}}>
                         <option>Select Type</option>
                         <option>MC</option>
                         <option>PC</option>
@@ -596,7 +742,7 @@ function Menu() {
                       </select>
                     </div>
                     <div>
-                      <label htmlFor="policy-number-input" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>Policy Number <span style={{color: '#ef4444'}}>*</span></label>
+                      <label htmlFor="policy-number-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Policy Number <span style={{color: '#ef4444'}}>*</span></label>
                       <input 
                         id="policy-number-input"
                         type="text" 
@@ -606,6 +752,7 @@ function Menu() {
                           const value = e.target.value.replace(/[^0-9]/g, '');
                           setFormData(prev => ({ ...prev, policyNumber: value }));
                         }}
+                        onBlur={handleBlur}
                         placeholder="Policy number"
                         aria-label="Policy Number - numbers only - required"
                         aria-required="true"
@@ -615,16 +762,14 @@ function Menu() {
                           e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                           e.target.style.backgroundColor = '#f8fdf9';
                         }}
-                        onBlur={(e) => {
-                          e.target.style.boxShadow = '';
-                          e.target.style.borderColor = '#d1d5db';
-                          e.target.style.backgroundColor = '#ffffff';
-                        }}
-                        style={inputBaseStyle}
+                        style={{...inputBaseStyle, borderColor: touched.policyNumber && !formData.policyNumber ? '#ef4444' : inputBaseStyle.borderColor}}
                       />
+                      {touched.policyNumber && !formData.policyNumber && (
+                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
+                      )}
                     </div>
                     <div>
-                      <label htmlFor="year-select" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>Year</label>
+                      <label htmlFor="year-select" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Year <span style={{color: '#ef4444'}}>*</span></label>
                       <select id="year-select" aria-label="Policy year" onFocus={(e) => {
                         e.target.style.borderColor = '#1a5f3f';
                         e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
@@ -633,7 +778,7 @@ function Menu() {
                         e.target.style.boxShadow = '';
                         e.target.style.borderColor = '#d1d5db';
                         e.target.style.backgroundColor = '#ffffff';
-                      }} style={inputBaseStyle}>
+                      }} style={{...inputBaseStyle, borderColor: touched.year && !formData.year ? '#ef4444' : inputBaseStyle.borderColor}}>
                         <option>Select</option>
                         <option>2026</option>
                         <option>2025</option>
@@ -641,13 +786,14 @@ function Menu() {
                       </select>
                     </div>
                     <div>
-                      <label htmlFor="date-issued-input" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>Issued <span style={{color: '#ef4444'}}>*</span></label>
+                      <label htmlFor="date-issued-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Issued <span style={{color: '#ef4444'}}>*</span></label>
                       <input 
                         id="date-issued-input"
                         type="date" 
                         name="dateIssued" 
                         value={formData.dateIssued} 
                         onChange={handleChange}
+                        onBlur={handleBlur}
                         aria-label="Date issued - required"
                         aria-required="true"
                         onFocus={(e) => {
@@ -655,22 +801,21 @@ function Menu() {
                           e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                           e.target.style.backgroundColor = '#f8fdf9';
                         }}
-                        onBlur={(e) => {
-                          e.target.style.boxShadow = '';
-                          e.target.style.borderColor = '#d1d5db';
-                          e.target.style.backgroundColor = '#ffffff';
-                        }}
-                        style={inputBaseStyle}
+                        style={{...inputBaseStyle, borderColor: touched.dateIssued && !formData.dateIssued ? '#ef4444' : inputBaseStyle.borderColor}}
                       />
+                      {touched.dateIssued && !formData.dateIssued && (
+                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
+                      )}
                     </div>
                     <div>
-                      <label htmlFor="date-received-input" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>Received <span style={{color: '#ef4444'}}>*</span></label>
+                      <label htmlFor="date-received-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Received <span style={{color: '#ef4444'}}>*</span></label>
                       <input 
                         id="date-received-input"
                         type="date" 
-                        name="dateReceived" 
+                        name="dateReceived"
                         value={formData.dateReceived} 
                         onChange={handleChange}
+                        onBlur={handleBlur}
                         aria-label="Date received - required"
                         aria-required="true"
                         onFocus={(e) => {
@@ -678,49 +823,55 @@ function Menu() {
                           e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                           e.target.style.backgroundColor = '#f8fdf9';
                         }}
-                        onBlur={(e) => {
-                          e.target.style.boxShadow = '';
-                          e.target.style.borderColor = '#d1d5db';
-                          e.target.style.backgroundColor = '#ffffff';
-                        }}
-                        style={inputBaseStyle}
+                        style={{...inputBaseStyle, borderColor: touched.dateReceived && !formData.dateReceived ? '#ef4444' : inputBaseStyle.borderColor}}
                       />
+                      {touched.dateReceived && !formData.dateReceived && (
+                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 {/* Section 2: Insurance Period */}
-                <div style={{backgroundColor: 'white', borderRadius: '12px', padding: '24px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', transition: 'all 0.3s ease', border: '1px solid #e5e7eb'}} onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(45, 80, 22, 0.08)';
-                  e.currentTarget.style.borderColor = '#d1d5db';
-                }} onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
-                  e.currentTarget.style.borderColor = '#e5e7eb';
+                <div style={{
+                  marginBottom: '10px', 
+                  padding: '15px', 
+                  background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)',
+                  borderRadius: '10px', 
+                  border: '1px solid rgba(90, 140, 58, 0.2)'
                 }}>
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '12px', borderBottom: '2px solid #1a5f3f'}}>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-                      <div style={{width: '4px', height: '24px', backgroundColor: '#2D5016', borderRadius: '2px'}}></div>
-                      <h3 style={{fontSize: '14px', fontWeight: '700', color: '#1f2937', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px'}}>Insurance Period</h3>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px'}}>
+                    <div style={{width: '4px', height: '22px', backgroundColor: '#5A8C3A', borderRadius: '2px'}}></div>
+                    <h4 style={{
+                      fontSize: '13px', 
+                      fontWeight: '700', 
+                      color: '#2D5016', 
+                      margin: 0, 
+                      textTransform: 'uppercase', 
+                      letterSpacing: '0.3px'
+                    }}>
+                      Insurance Period
+                    </h4>
+                  </div>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px'}} aria-live="polite" aria-label={`Insurance Period: ${isInsurancePeriodComplete() ? 'Complete' : 'Incomplete'}`}>
+                    <div style={{width: '24px', height: '24px', borderRadius: '50%', backgroundColor: isInsurancePeriodComplete() ? '#1a5f3f' : '#e5e7eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700'}} aria-hidden="true">
+                      {isInsurancePeriodComplete() ? '✓' : '○'}
                     </div>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '8px'}} aria-live="polite" aria-label={`Insurance Period: ${isInsurancePeriodComplete() ? 'Complete' : 'Incomplete'}`}>
-                      <div style={{width: '24px', height: '24px', borderRadius: '50%', backgroundColor: isInsurancePeriodComplete() ? '#1a5f3f' : '#e5e7eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700'}} aria-hidden="true">
-                        {isInsurancePeriodComplete() ? '✓' : '○'}
-                      </div>
-                      <span style={{fontSize: '12px', color: isInsurancePeriodComplete() ? '#1a5f3f' : '#d1d5db', fontWeight: '600'}}>
-                        {isInsurancePeriodComplete() ? 'Complete' : 'Incomplete'}
-                      </span>
-                    </div>
+                    <span style={{fontSize: '12px', color: isInsurancePeriodComplete() ? '#1a5f3f' : '#d1d5db', fontWeight: '600'}}>
+                      {isInsurancePeriodComplete() ? 'Complete' : 'Incomplete'}
+                    </span>
                   </div>
                   
                   <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px'}}>
                     <div>
-                      <label htmlFor="from-date-input" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>From Date <span style={{color: '#ef4444'}}>*</span></label>
+                      <label htmlFor="from-date-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>From Date <span style={{color: '#ef4444'}}>*</span></label>
                       <input 
                         id="from-date-input"
                         type="date" 
                         name="insuranceFromDate" 
                         value={formData.insuranceFromDate} 
                         onChange={handleChange}
+                        onBlur={handleBlur}
                         aria-label="Insurance from date - required"
                         aria-required="true"
                         onFocus={(e) => {
@@ -728,24 +879,332 @@ function Menu() {
                           e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                           e.target.style.backgroundColor = '#f8fdf9';
                         }}
-                        onBlur={(e) => {
-                          e.target.style.boxShadow = '';
-                          e.target.style.borderColor = '#d1d5db';
-                          e.target.style.backgroundColor = '#ffffff';
-                        }}
-                        style={inputBaseStyle}
+                        style={{...inputBaseStyle, borderColor: touched.insuranceFromDate && !formData.insuranceFromDate ? '#ef4444' : inputBaseStyle.borderColor}}
                       />
+                      {touched.insuranceFromDate && !formData.insuranceFromDate && (
+                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
+                      )}
                     </div>
                     <div>
-                      <label htmlFor="to-date-input" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>To Date <span style={{color: '#ef4444'}}>*</span></label>
+                      <label htmlFor="to-date-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>To Date <span style={{color: '#ef4444'}}>*</span></label>
                       <input 
                         id="to-date-input"
                         type="date" 
                         name="insuranceToDate" 
                         value={formData.insuranceToDate} 
                         onChange={handleChange}
+                        onBlur={handleBlur}
                         aria-label="Insurance to date - required"
                         aria-required="true"
+                        onFocus={(e) => {
+                          e.target.style.borderColor = '#1a5f3f';
+                          e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
+                          e.target.style.backgroundColor = '#f8fdf9';
+                        }}
+                        style={{...inputBaseStyle, borderColor: touched.insuranceToDate && !formData.insuranceToDate ? '#ef4444' : inputBaseStyle.borderColor}}
+                      />
+                      {touched.insuranceToDate && !formData.insuranceToDate && (
+                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 3: Vehicle Details */}
+                <div style={{
+                  marginBottom: '10px', 
+                  padding: '15px', 
+                  background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)',
+                  borderRadius: '10px', 
+                  border: '1px solid rgba(90, 140, 58, 0.2)'
+                }}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px'}}>
+                    <div style={{width: '4px', height: '22px', backgroundColor: '#5A8C3A', borderRadius: '2px'}}></div>
+                    <h4 style={{
+                      fontSize: '13px', 
+                      fontWeight: '700', 
+                      color: '#2D5016', 
+                      margin: 0, 
+                      textTransform: 'uppercase', 
+                      letterSpacing: '0.3px'
+                    }}>
+                      Vehicle Details
+                    </h4>
+                  </div>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px'}} aria-live="polite" aria-label={`Vehicle Details: ${isVehicleDetailsComplete() ? 'Complete' : 'Incomplete'}`}>
+                    <div style={{width: '24px', height: '24px', borderRadius: '50%', backgroundColor: isVehicleDetailsComplete() ? '#1a5f3f' : '#e5e7eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700'}} aria-hidden="true">
+                      {isVehicleDetailsComplete() ? '✓' : '○'}
+                    </div>
+                    <span style={{fontSize: '12px', color: isVehicleDetailsComplete() ? '#1a5f3f' : '#d1d5db', fontWeight: '600'}}>
+                      {isVehicleDetailsComplete() ? 'Complete' : 'Incomplete'}
+                    </span>
+                  </div>
+                  
+                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px'}}>
+                    <div>
+                      <label htmlFor="model-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Model <span style={{color: '#ef4444'}}>*</span></label>
+                      <input 
+                        id="model-input"
+                        type="text" 
+                        name="model" 
+                        value={formData.model} 
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="Enter model"
+                        aria-label="Vehicle model - required"
+                        aria-required="true"
+                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s', textTransform: 'uppercase', borderColor: touched.model && !formData.model ? '#ef4444' : '#e5e7eb'}} 
+                      />
+                      {touched.model && !formData.model && (
+                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
+                      )}
+                    </div>
+                    <div>
+                      <label htmlFor="make-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Make <span style={{color: '#ef4444'}}>*</span></label>
+                      <input 
+                        id="make-input"
+                        type="text" 
+                        name="make" 
+                        value={formData.make} 
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="Enter make"
+                        aria-label="Vehicle make - required"
+                        aria-required="true"
+                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s', textTransform: 'uppercase', borderColor: touched.make && !formData.make ? '#ef4444' : '#e5e7eb'}} 
+                      />
+                      {touched.make && !formData.make && (
+                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
+                      )}
+                    </div>
+                    <div>
+                      <label htmlFor="body-type-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Body Type <span style={{color: '#ef4444'}}>*</span></label>
+                      <input 
+                        id="body-type-input"
+                        type="text" 
+                        name="bodyType" 
+                        value={formData.bodyType} 
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="Enter type"
+                        aria-label="Vehicle body type - required"
+                        aria-required="true"
+                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s', textTransform: 'uppercase', borderColor: touched.bodyType && !formData.bodyType ? '#ef4444' : '#e5e7eb'}} 
+                      />
+                      {touched.bodyType && !formData.bodyType && (
+                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px', marginBottom: '16px'}}>
+                    <div>
+                      <label htmlFor="color-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Color <span style={{color: '#ef4444'}}>*</span></label>
+                      <input 
+                        id="color-input"
+                        type="text" 
+                        name="color" 
+                        value={formData.color} 
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="Color"
+                        aria-label="Vehicle color - required"
+                        aria-required="true"
+                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s', textTransform: 'uppercase', borderColor: touched.color && !formData.color ? '#ef4444' : '#e5e7eb'}} 
+                      />
+                      {touched.color && !formData.color && (
+                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
+                      )}
+                    </div>
+                    <div>
+                      <label htmlFor="mv-file-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>MV File No. <span style={{color: '#ef4444'}}>*</span></label>
+                      <input 
+                        id="mv-file-input"
+                        type="text" 
+                        name="mvFileNo" 
+                        value={formData.mvFileNo} 
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="File no."
+                        aria-label="Motor vehicle file number - required"
+                        aria-required="true"
+                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s', textTransform: 'uppercase', borderColor: touched.mvFileNo && !formData.mvFileNo ? '#ef4444' : '#e5e7eb'}} 
+                      />
+                      {touched.mvFileNo && !formData.mvFileNo && (
+                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
+                      )}
+                    </div>
+                    <div>
+                      <label htmlFor="plate-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Plate No. <span style={{color: '#ef4444'}}>*</span></label>
+                      <input 
+                        id="plate-input"
+                        type="text" 
+                        name="plateNo" 
+                        value={formData.plateNo} 
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="Plate"
+                        aria-label="License plate number - required"
+                        aria-required="true"
+                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s', textTransform: 'uppercase', borderColor: touched.plateNo && !formData.plateNo ? '#ef4444' : '#e5e7eb'}} 
+                      />
+                      {touched.plateNo && !formData.plateNo && (
+                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
+                      )}
+                    </div>
+                    <div>
+                      <label htmlFor="chassis-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Chassis No. <span style={{color: '#ef4444'}}>*</span></label>
+                      <input 
+                        id="chassis-input"
+                        type="text" 
+                        name="serialChassisNo" 
+                        value={formData.serialChassisNo} 
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        placeholder="Chassis"
+                        aria-label="Chassis number - required"
+                        aria-required="true"
+                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s', textTransform: 'uppercase', borderColor: touched.serialChassisNo && !formData.serialChassisNo ? '#ef4444' : '#e5e7eb'}} 
+                      />
+                      {touched.serialChassisNo && !formData.serialChassisNo && (
+                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label htmlFor="motor-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Motor No. <span style={{color: '#ef4444'}}>*</span></label>
+                    <input 
+                      id="motor-input"
+                      type="text" 
+                      name="motorNo" 
+                      value={formData.motorNo} 
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      placeholder="Enter motor number"
+                      aria-label="Motor number - required"
+                      aria-required="true"
+                      onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
+                      style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s', textTransform: 'uppercase', borderColor: touched.motorNo && !formData.motorNo ? '#ef4444' : '#e5e7eb'}} 
+                    />
+                    {touched.motorNo && !formData.motorNo && (
+                      <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: Rates */}
+            {currentStep === 2 && (
+              <div style={{
+                ...stepTransitionStyle, 
+                background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)', 
+                borderRadius: '12px', 
+                padding: '28px', 
+                marginBottom: '20px', 
+                boxShadow: '0 3px 12px rgba(45, 80, 22, 0.08)', 
+                maxWidth: '1000px', 
+                margin: '0 auto 20px', 
+                transition: 'all 0.3s ease', 
+                border: '2px solid rgba(90, 140, 58, 0.15)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(45, 80, 22, 0.12)';
+                e.currentTarget.style.borderColor = 'rgba(90, 140, 58, 0.3)';
+              }} 
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = '0 4px 16px rgba(45, 80, 22, 0.08)';
+                e.currentTarget.style.borderColor = 'rgba(90, 140, 58, 0.15)';
+              }}>
+                
+                {/* Header Section with Icon */}
+                <div style={{textAlign: 'center', marginBottom: '32px', position: 'relative'}}>
+                  <div style={{
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    width: '56px', 
+                    height: '56px', 
+                    borderRadius: '50%', 
+                    backgroundColor: '#dcfce7', 
+                    marginBottom: '11px', 
+                    boxShadow: '0 4px 12px rgba(45, 80, 22, 0.15)'
+                  }}>
+                    <span style={{fontSize: '28px', color: '#2D5016'}}>₱</span>
+                  </div>
+                  <h3 style={{
+                    fontSize: '26px', 
+                    fontWeight: '800', 
+                    color: '#1a5f3f', 
+                    margin: '0 0 5px 0', 
+                    letterSpacing: '-0.5px'
+                  }}>
+                    Insurance Rates Calculation
+                  </h3>
+                  <p style={{fontSize: '14px', color: '#5A8C3A', margin: 0, fontWeight: '500'}}>
+                    Enter the premium amount. Other charges will be calculated automatically
+                  </p>
+                </div>
+                
+                {/* Input Fields Section - Featured Section */}
+                <div style={{
+                  marginBottom: '10px', 
+                  padding: '15px', 
+                  background: 'linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%)', 
+                  borderRadius: '12px', 
+                  border: '2px solid #a7d49b', 
+                  boxShadow: '0 2px 8px rgba(45, 80, 22, 0.08)'
+                }}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px'}}>
+                    <div style={{width: '5px', height: '28px', backgroundColor: '#2D5016', borderRadius: '3px'}}></div>
+                    <h4 style={{
+                      fontSize: '14px', 
+                      fontWeight: '800', 
+                      color: '#2D5016', 
+                      margin: 0, 
+                      textTransform: 'uppercase', 
+                      letterSpacing: '0.5px'
+                    }}>
+                      Premium & Charges
+                    </h4>
+                  </div>
+                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px'}}>
+                    <div style={{
+                      padding: '16px', 
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                      borderRadius: '10px', 
+                      border: '2px solid #5A8C3A', 
+                      boxShadow: '0 2px 6px rgba(45, 80, 22, 0.06)', 
+                      transition: 'all 0.2s'
+                    }} 
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(45, 80, 22, 0.12)';
+                    }} 
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 2px 6px rgba(45, 80, 22, 0.06)';
+                    }}>
+                      <label htmlFor="premium-input" style={{fontSize: '10px', fontWeight: '700', color: '#5A8C3A', display: 'block', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Premium (Input)</label>
+                      <input 
+                        id="premium-input"
+                        type="text" 
+                        value={ratesData.premium}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9.]/g, '');
+                          setRatesData({...ratesData, premium: value});
+                        }}
+                        placeholder="0.00"
+                        aria-label="Premium amount - numbers only"
+                        inputMode="decimal"
                         onFocus={(e) => {
                           e.target.style.borderColor = '#1a5f3f';
                           e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
@@ -756,469 +1215,716 @@ function Menu() {
                           e.target.style.borderColor = '#d1d5db';
                           e.target.style.backgroundColor = '#ffffff';
                         }}
-                        style={inputBaseStyle}
+                        style={{...inputBaseStyle, fontWeight: '600', borderColor: '#1a5f3f', width: '100%'}}
+                      />
+                    </div>
+                    <div style={{
+                      padding: '16px', 
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                      borderRadius: '10px', 
+                      border: '2px solid #5A8C3A', 
+                      boxShadow: '0 2px 6px rgba(45, 80, 22, 0.06)', 
+                      transition: 'all 0.2s'
+                    }} 
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(45, 80, 22, 0.12)';
+                    }} 
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 2px 6px rgba(45, 80, 22, 0.06)';
+                    }}>
+                      <label htmlFor="other-charges-input" style={{fontSize: '10px', fontWeight: '700', color: '#5A8C3A', display: 'block', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px'}}>Other Charges (Input)</label>
+                      <input 
+                        id="other-charges-input"
+                        type="text" 
+                        value={ratesData.otherCharges}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9.]/g, '');
+                          setRatesData({...ratesData, otherCharges: value});
+                        }}
+                        placeholder="0.00"
+                        aria-label="Other charges - numbers only"
+                        inputMode="decimal"
+                        onFocus={(e) => {
+                          e.target.style.borderColor = '#1a5f3f';
+                          e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
+                          e.target.style.backgroundColor = '#f8fdf9';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.boxShadow = '';
+                          e.target.style.borderColor = '#d1d5db';
+                          e.target.style.backgroundColor = '#ffffff';
+                        }}
+                        style={{...inputBaseStyle, fontWeight: '600', borderColor: '#1a5f3f', width: '100%'}}
                       />
                     </div>
                   </div>
                 </div>
-
-                {/* Section 3: Vehicle Details */}
-                <div style={{backgroundColor: 'white', borderRadius: '12px', padding: '24px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', transition: 'all 0.3s ease', border: '1px solid #e5e7eb'}} onMouseEnter={(e) => {
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(45, 80, 22, 0.08)';
-                  e.currentTarget.style.borderColor = '#d1d5db';
-                }} onMouseLeave={(e) => {
-                  e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
-                  e.currentTarget.style.borderColor = '#e5e7eb';
-                }}>
-                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', paddingBottom: '12px', borderBottom: '2px solid #1a5f3f'}}>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-                      <div style={{width: '4px', height: '24px', backgroundColor: '#2D5016', borderRadius: '2px'}}></div>
-                      <h3 style={{fontSize: '14px', fontWeight: '700', color: '#1f2937', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px'}}>Vehicle Details</h3>
-                    </div>
-                    <div style={{display: 'flex', alignItems: 'center', gap: '8px'}} aria-live="polite" aria-label={`Vehicle Details: ${isVehicleDetailsComplete() ? 'Complete' : 'Incomplete'}`}>
-                      <div style={{width: '24px', height: '24px', borderRadius: '50%', backgroundColor: isVehicleDetailsComplete() ? '#1a5f3f' : '#e5e7eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700'}} aria-hidden="true">
-                        {isVehicleDetailsComplete() ? '✓' : '○'}
-                      </div>
-                      <span style={{fontSize: '12px', color: isVehicleDetailsComplete() ? '#1a5f3f' : '#d1d5db', fontWeight: '600'}}>
-                        {isVehicleDetailsComplete() ? 'Complete' : 'Incomplete'}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px'}}>
-                    <div>
-                      <label htmlFor="model-input" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>Model <span style={{color: '#ef4444'}}>*</span></label>
-                      <input 
-                        id="model-input"
-                        type="text" 
-                        name="model" 
-                        value={formData.model} 
-                        onChange={handleChange}
-                        placeholder="Enter model"
-                        aria-label="Vehicle model - required"
-                        aria-required="true"
-                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
-                        onBlur={(e) => {
-                          e.target.style.boxShadow = '';
-                          e.target.style.borderColor = '#e5e7eb';
-                        }}
-                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s'}} 
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="make-input" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>Make <span style={{color: '#ef4444'}}>*</span></label>
-                      <input 
-                        id="make-input"
-                        type="text" 
-                        name="make" 
-                        value={formData.make} 
-                        onChange={handleChange}
-                        placeholder="Enter make"
-                        aria-label="Vehicle make - required"
-                        aria-required="true"
-                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
-                        onBlur={(e) => {
-                          e.target.style.boxShadow = '';
-                          e.target.style.borderColor = '#e5e7eb';
-                        }}
-                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s'}} 
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="body-type-input" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>Body Type <span style={{color: '#ef4444'}}>*</span></label>
-                      <input 
-                        id="body-type-input"
-                        type="text" 
-                        name="bodyType" 
-                        value={formData.bodyType} 
-                        onChange={handleChange}
-                        placeholder="Enter type"
-                        aria-label="Vehicle body type - required"
-                        aria-required="true"
-                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
-                        onBlur={(e) => {
-                          e.target.style.boxShadow = '';
-                          e.target.style.borderColor = '#e5e7eb';
-                        }}
-                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s'}} 
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px', marginBottom: '16px'}}>
-                    <div>
-                      <label htmlFor="color-input" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>Color <span style={{color: '#ef4444'}}>*</span></label>
-                      <input 
-                        id="color-input"
-                        type="text" 
-                        name="color" 
-                        value={formData.color} 
-                        onChange={handleChange}
-                        placeholder="Color"
-                        aria-label="Vehicle color - required"
-                        aria-required="true"
-                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
-                        onBlur={(e) => {
-                          e.target.style.boxShadow = '';
-                          e.target.style.borderColor = '#e5e7eb';
-                        }}
-                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s'}} 
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="mv-file-input" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>MV File No.</label>
-                      <input 
-                        id="mv-file-input"
-                        type="text" 
-                        name="mvFileNo" 
-                        value={formData.mvFileNo} 
-                        onChange={handleChange}
-                        placeholder="File no."
-                        aria-label="Motor vehicle file number"
-                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
-                        onBlur={(e) => {
-                          e.target.style.boxShadow = '';
-                          e.target.style.borderColor = '#e5e7eb';
-                        }}
-                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s'}} 
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="plate-input" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>Plate No. <span style={{color: '#ef4444'}}>*</span></label>
-                      <input 
-                        id="plate-input"
-                        type="text" 
-                        name="plateNo" 
-                        value={formData.plateNo} 
-                        onChange={handleChange}
-                        placeholder="Plate"
-                        aria-label="License plate number - required"
-                        aria-required="true"
-                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
-                        onBlur={(e) => {
-                          e.target.style.boxShadow = '';
-                          e.target.style.borderColor = '#e5e7eb';
-                        }}
-                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s'}} 
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="chassis-input" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>Chassis No. <span style={{color: '#ef4444'}}>*</span></label>
-                      <input 
-                        id="chassis-input"
-                        type="text" 
-                        name="serialChassisNo" 
-                        value={formData.serialChassisNo} 
-                        onChange={handleChange}
-                        placeholder="Chassis"
-                        aria-label="Chassis number - required"
-                        aria-required="true"
-                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
-                        onBlur={(e) => {
-                          e.target.style.boxShadow = '';
-                          e.target.style.borderColor = '#e5e7eb';
-                        }}
-                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s'}} 
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label htmlFor="motor-input" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>Motor No. <span style={{color: '#ef4444'}}>*</span></label>
-                    <input 
-                      id="motor-input"
-                      type="text" 
-                      name="motorNo" 
-                      value={formData.motorNo} 
-                      onChange={handleChange}
-                      placeholder="Enter motor number"
-                      aria-label="Motor number - required"
-                      aria-required="true"
-                      onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
-                      onBlur={(e) => {
-                        e.target.style.boxShadow = '';
-                        e.target.style.borderColor = '#e5e7eb';
-                      }}
-                      style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s'}} 
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 2: Rates */}
-            {currentStep === 2 && (
-              <div style={{...stepTransitionStyle, backgroundColor: 'white', borderRadius: '12px', padding: '32px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', maxWidth: '900px', margin: '0 auto 24px', transition: 'all 0.3s ease', border: '1px solid #e5e7eb'}} onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(45, 80, 22, 0.08)';
-              }} onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
-              }}>
-                <h3 style={{fontSize: '22px', fontWeight: '700', color: '#2D5016', margin: '0 0 24px 0', textAlign: 'center'}}>Insurance Rates Calculation</h3>
-                <p style={{fontSize: '15px', color: '#6b7280', marginBottom: '28px', textAlign: 'center'}}>Enter the premium amount. Other charges will be calculated automatically:</p>
                 
-                <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '28px'}}>
-                  <div>
-                    <label htmlFor="premium-input" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>Premium (Input)</label>
-                    <input 
-                      id="premium-input"
-                      type="text" 
-                      value={ratesData.premium}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/[^0-9.]/g, '');
-                        setRatesData({...ratesData, premium: value});
-                      }}
-                      placeholder="0.00"
-                      aria-label="Premium amount - numbers only"
-                      inputMode="decimal"
-                      onFocus={(e) => {
-                        e.target.style.borderColor = '#1a5f3f';
-                        e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
-                        e.target.style.backgroundColor = '#f8fdf9';
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.boxShadow = '';
-                        e.target.style.borderColor = '#d1d5db';
-                        e.target.style.backgroundColor = '#ffffff';
-                      }}
-                      style={{...inputBaseStyle, fontWeight: '600', borderColor: '#1a5f3f'}}
-                    />
+                {/* Calculated Charges Section */}
+                <div style={{
+                  marginBottom: '10px', 
+                  padding: '15px', 
+                  backgroundColor: 'rgba(255, 255, 255, 0.6)', 
+                  borderRadius: '10px', 
+                  border: '1px solid rgba(90, 140, 58, 0.2)'
+                }}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px'}}>
+                    <div style={{width: '4px', height: '22px', backgroundColor: '#5A8C3A', borderRadius: '2px'}}></div>
+                    <h4 style={{
+                      fontSize: '13px', 
+                      fontWeight: '700', 
+                      color: '#2D5016', 
+                      margin: 0, 
+                      textTransform: 'uppercase', 
+                      letterSpacing: '0.3px'
+                    }}>
+                      Calculated Charges
+                    </h4>
                   </div>
-                  <div>
-                    <label htmlFor="doc-stamps-output" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>Doc. Stamps (12.5%)</label>
-                    <input 
-                      id="doc-stamps-output"
-                      type="number" 
-                      value={rates.docStamps.toFixed(2)}
-                      readOnly
-                      placeholder="0.00"
-                      aria-label="Doc stamps amount calculated"
-                      style={{...inputBaseStyle, backgroundColor: '#f8fafc', borderColor: '#d1d5db'}}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="evat-output" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>E-VAT (12%)</label>
-                    <input 
-                      id="evat-output"
-                      type="number" 
-                      value={rates.eVat.toFixed(2)}
-                      readOnly
-                      placeholder="0.00"
-                      aria-label="E-VAT amount calculated"
-                      style={{...inputBaseStyle, backgroundColor: '#f8fafc', borderColor: '#d1d5db'}}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="lgt-output" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>Local Govt Tax (0.5%)</label>
-                    <input 
-                      id="lgt-output"
-                      type="number" 
-                      value={rates.lgt.toFixed(2)}
-                      readOnly
-                      placeholder="0.00"
-                      aria-label="Local government tax amount calculated"
-                      style={{...inputBaseStyle, backgroundColor: '#f8fafc', borderColor: '#d1d5db'}}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="auth-fee-output" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>Auth. Fee (Fixed)</label>
-                    <input 
-                      id="auth-fee-output"
-                      type="number" 
-                      value={rates.authFee.toFixed(2)}
-                      readOnly
-                      placeholder="0.00"
-                      aria-label="Authorization fee fixed amount"
-                      style={{...inputBaseStyle, backgroundColor: '#f8fafc', borderColor: '#d1d5db'}}
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="other-charges-input" style={{fontSize: '12px', fontWeight: '600', color: '#6b7280', display: 'block', marginBottom: '8px'}}>Other Charges (Input)</label>
-                    <input 
-                      id="other-charges-input"
-                      type="text" 
-                      value={ratesData.otherCharges}
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/[^0-9.]/g, '');
-                        setRatesData({...ratesData, otherCharges: value});
-                      }}
-                      placeholder="0.00"
-                      aria-label="Other charges - numbers only"
-                      inputMode="decimal"
-                      onFocus={(e) => {
-                        e.target.style.borderColor = '#1a5f3f';
-                        e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
-                        e.target.style.backgroundColor = '#f8fdf9';
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.boxShadow = '';
-                        e.target.style.borderColor = '#d1d5db';
-                        e.target.style.backgroundColor = '#ffffff';
-                      }}
-                      style={{...inputBaseStyle, fontWeight: '600', borderColor: '#1a5f3f'}}
-                    />
+                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px'}}>
+                    <div style={{
+                      padding: '12px', 
+                      backgroundColor: 'rgba(248, 250, 252, 0.8)', 
+                      borderRadius: '8px', 
+                      border: '3px solid #a7d49b'
+                    }}>
+                      <label htmlFor="doc-stamps-output" style={{fontSize: '10px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0', display: 'block'}}>Doc. Stamps (12.5%)</label>
+                      <input 
+                        id="doc-stamps-output"
+                        type="number" 
+                        value={rates.docStamps.toFixed(2)}
+                        readOnly
+                        placeholder="0.00"
+                        aria-label="Doc stamps amount calculated"
+                        style={{...inputBaseStyle, backgroundColor: '#f8fafc', borderColor: '#d1d5db', fontWeight: '600', color: '#1a3a0f', width: '100%'}}
+                      />
+                    </div>
+                    <div style={{
+                      padding: '12px', 
+                      backgroundColor: 'rgba(248, 250, 252, 0.8)', 
+                      borderRadius: '8px', 
+                      border: '3px solid #a7d49b'
+                    }}>
+                      <label htmlFor="evat-output" style={{fontSize: '10px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0', display: 'block'}}>E-VAT (12%)</label>
+                      <input 
+                        id="evat-output"
+                        type="number" 
+                        value={rates.eVat.toFixed(2)}
+                        readOnly
+                        placeholder="0.00"
+                        aria-label="E-VAT amount calculated"
+                        style={{...inputBaseStyle, backgroundColor: '#f8fafc', borderColor: '#d1d5db', fontWeight: '600', color: '#1a3a0f', width: '100%'}}
+                      />
+                    </div>
+                    <div style={{
+                      padding: '12px', 
+                      backgroundColor: 'rgba(248, 250, 252, 0.8)', 
+                      borderRadius: '8px', 
+                      border: '3px solid #a7d49b'
+                    }}>
+                      <label htmlFor="lgt-output" style={{fontSize: '10px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0', display: 'block'}}>Local Govt Tax (0.5%)</label>
+                      <input 
+                        id="lgt-output"
+                        type="number" 
+                        value={rates.lgt.toFixed(2)}
+                        readOnly
+                        placeholder="0.00"
+                        aria-label="Local government tax amount calculated"
+                        style={{...inputBaseStyle, backgroundColor: '#f8fafc', borderColor: '#d1d5db', fontWeight: '600', color: '#1a3a0f', width: '100%'}}
+                      />
+                    </div>
+                    <div style={{
+                      padding: '12px', 
+                      backgroundColor: 'rgba(248, 250, 252, 0.8)', 
+                      borderRadius: '8px', 
+                      border: '3px solid #a7d49b'
+                    }}>
+                      <label htmlFor="auth-fee-output" style={{fontSize: '10px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0', display: 'block'}}>Auth. Fee (Fixed)</label>
+                      <input 
+                        id="auth-fee-output"
+                        type="number" 
+                        value={rates.authFee.toFixed(2)}
+                        readOnly
+                        placeholder="0.00"
+                        aria-label="Authorization fee fixed amount"
+                        style={{...inputBaseStyle, backgroundColor: '#f8fafc', borderColor: '#d1d5db', fontWeight: '600', color: '#1a3a0f', width: '100%'}}
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div style={{padding: '16px', backgroundColor: '#dcfce7', borderRadius: '8px', borderLeft: '4px solid #1a5f3f'}} role="region" aria-label="Total premium amount summary">
-                  <p style={{fontSize: '12px', color: '#6b7280', margin: '0 0 8px 0'}}>Total Premium</p>
-                  <p style={{fontSize: '28px', fontWeight: '700', color: '#1a5f3f', margin: 0}} aria-live="polite">₱{rates.total.toFixed(2)}</p>
+                {/* Total Premium Summary */}
+                <div style={{
+                  padding: '20px', 
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',  
+                  borderRadius: '12px', 
+                  border: '2px solid #5A8C3A',
+                  boxShadow: '0 4px 12px rgba(45, 80, 22, 0.12)',
+                  textAlign: 'center'
+                }} role="region" aria-label="Total premium amount summary">
+                  <p style={{fontSize: '12px', color: '#ffffff', margin: '0 0 8px 0', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.5px'}}>Total Premium</p>
+                  <p style={{fontSize: '32px', fontWeight: '800', color: '#ffffff', margin: 0}} aria-live="polite">₱{rates.total.toFixed(2)}</p>
                 </div>
               </div>
             )}
 
             {/* STEP 3: Review */}
-            {currentStep === 3 && (
-              <div style={{...stepTransitionStyle, backgroundColor: 'white', borderRadius: '12px', padding: '32px', marginBottom: '24px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)', maxWidth: '900px', margin: '0 auto 24px', transition: 'all 0.3s ease', border: '1px solid #e5e7eb'}} onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(45, 80, 22, 0.08)';
-              }} onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.08)';
-              }}>
-                <h3 style={{fontSize: '18px', fontWeight: '700', color: '#1f2937', margin: '0 0 24px 0', textAlign: 'center', paddingBottom: '16px', borderBottom: '2px solid #5A8C3A'}}>Review Your Information</h3>
-                
-                {/* Quick Reference Summary */}
-                <div style={{marginBottom: '20px', paddingBottom: '0px', borderBottom: 'none', backgroundColor: 'transparent', borderRadius: '8px', padding: '0px'}}>
-                  <h4 style={{fontSize: '12px', fontWeight: '700', color: '#2D5016', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.3px'}}>Quick Reference</h4>
-                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px'}}>
-                    <div style={{padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', borderLeft: '2px solid #5A8C3A', boxShadow: '0 1px 3px rgba(45, 80, 22, 0.1)'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0'}}>Assured</p>
-                      <p style={{fontSize: '13px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.assured || '-'}</p>
-                    </div>
-                    <div style={{padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', borderLeft: '2px solid #5A8C3A', boxShadow: '0 1px 3px rgba(45, 80, 22, 0.1)'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0'}}>Address</p>
-                      <p style={{fontSize: '13px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.address || '-'}</p>
-                    </div>
-                    <div style={{padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', borderLeft: '2px solid #5A8C3A', boxShadow: '0 1px 3px rgba(45, 80, 22, 0.1)'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0'}}>COC #</p>
-                      <p style={{fontSize: '13px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.cocNumber || '-'}</p>
-                    </div>
-                    <div style={{padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', borderLeft: '2px solid #5A8C3A', boxShadow: '0 1px 3px rgba(45, 80, 22, 0.1)'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0'}}>OR #</p>
-                      <p style={{fontSize: '13px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.orNumber || '-'}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Section 1: Policy Information */}
-                <div style={{marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #e5e7eb'}}>
-                  <h4 style={{fontSize: '12px', fontWeight: '700', color: '#2D5016', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '0.3px'}}>Policy Information</h4>
-                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px'}}>
-                    <div style={{padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', borderLeft: '2px solid #5A8C3A'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0'}}>Type</p>
-                      <p style={{fontSize: '13px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.cType || '-'}</p>
-                    </div>
-                    <div style={{padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', borderLeft: '2px solid #5A8C3A'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0'}}>Policy #</p>
-                      <p style={{fontSize: '13px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.policyNumber || '-'}</p>
-                    </div>
-                    <div style={{padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', borderLeft: '2px solid #5A8C3A'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0'}}>Issued</p>
-                      <p style={{fontSize: '13px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.dateIssued || '-'}</p>
-                    </div>
-                    <div style={{padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', borderLeft: '2px solid #5A8C3A'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0'}}>Received</p>
-                      <p style={{fontSize: '13px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.dateReceived || '-'}</p>
-                    </div>
-                  </div>
-                </div>
+{currentStep === 3 && (
+<div style={{
+    ...stepTransitionStyle, 
+    background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)', 
+    borderRadius: '12px', 
+    padding: '28px', 
+    marginBottom: '20px', 
+    boxShadow: '0 3px 12px rgba(45, 80, 22, 0.08)', 
+    maxWidth: '1000px', 
+    margin: '0 auto 20px', 
+    transition: 'all 0.3s ease', 
+    border: '2px solid rgba(90, 140, 58, 0.15)'
+  }}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.boxShadow = '0 8px 24px rgba(45, 80, 22, 0.12)';
+    e.currentTarget.style.borderColor = 'rgba(90, 140, 58, 0.3)';
+  }} 
+  onMouseLeave={(e) => {
+    e.currentTarget.style.boxShadow = '0 4px 16px rgba(45, 80, 22, 0.08)';
+    e.currentTarget.style.borderColor = 'rgba(90, 140, 58, 0.15)';
+  }}>
+    
+    {/* Header Section with Icon */}
+    <div style={{textAlign: 'center', marginBottom: '32px', position: 'relative'}}>
+      <div style={{
+        display: 'inline-flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        width: '56px', 
+        height: '56px', 
+        borderRadius: '50%', 
+        backgroundColor: '#dcfce7', 
+        marginBottom: '11px', 
+        boxShadow: '0 4px 12px rgba(45, 80, 22, 0.15)'
+      }}>
+        <span style={{fontSize: '28px', color: '#2D5016'}}>✓</span>
+      </div>
+      <h3 style={{
+        fontSize: '26px', 
+        fontWeight: '800', 
+        color: '#1a5f3f', 
+        margin: '0 0 5px 0', 
+        letterSpacing: '-0.5px'
+      }}>
+        Review Your Information
+      </h3>
+      <p style={{fontSize: '14px', color: '#5A8C3A', margin: 0, fontWeight: '500'}}>
+        Please verify all details before submission
+      </p>
+    </div>
+    
+    {/* Quick Reference Summary - Featured Section */}
+    <div style={{
+      marginBottom: '10px', 
+      padding: '15px', 
+      background: 'linear-gradient(135deg, #dcfce7 0%, #f0fdf4 100%)', 
+      borderRadius: '12px', 
+      border: '2px solid #a7d49b', 
+      boxShadow: '0 2px 8px rgba(45, 80, 22, 0.08)'
+    }}>
+      <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px'}}>
+        <div style={{width: '5px', height: '28px', backgroundColor: '#2D5016', borderRadius: '3px'}}></div>
+        <h4 style={{
+          fontSize: '14px', 
+          fontWeight: '800', 
+          color: '#2D5016', 
+          margin: 0, 
+          textTransform: 'uppercase', 
+          letterSpacing: '0.5px'
+        }}>
+          Quick Reference
+        </h4>
+      </div>
+      <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px'}}>
+        <div style={{
+          padding: '16px', 
+          backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+          borderRadius: '10px', 
+          border: '2px solid #5A8C3A', 
+          boxShadow: '0 2px 6px rgba(45, 80, 22, 0.06)', 
+          transition: 'all 0.2s'
+        }} 
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 4px 12px rgba(45, 80, 22, 0.12)';
+        }} 
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 2px 6px rgba(45, 80, 22, 0.06)';
+        }}>
+          <p style={{
+            fontSize: '10px', 
+            color: '#5A8C3A', 
+            textTransform: 'uppercase', 
+            fontWeight: '700', 
+            margin: '0 0 6px 0', 
+            letterSpacing: '0.5px'
+          }}>
+            Assured
+          </p>
+          <p style={{fontSize: '15px', fontWeight: '700', color: '#1a3a0f', margin: 0}}>
+            {formData.assured || '-'}
+          </p>
+        </div>
+        <div style={{
+          padding: '16px', 
+          backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+          borderRadius: '10px', 
+          border: '2px solid #5A8C3A', 
+          boxShadow: '0 2px 6px rgba(45, 80, 22, 0.06)', 
+          transition: 'all 0.2s'
+        }} 
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 4px 12px rgba(45, 80, 22, 0.12)';
+        }} 
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 2px 6px rgba(45, 80, 22, 0.06)';
+        }}>
+          <p style={{
+            fontSize: '10px', 
+            color: '#5A8C3A', 
+            textTransform: 'uppercase', 
+            fontWeight: '700', 
+            margin: '0 0 6px 0', 
+            letterSpacing: '0.5px'
+          }}>
+            Address
+          </p>
+          <p style={{fontSize: '15px', fontWeight: '700', color: '#1a3a0f', margin: 0}}>
+            {formData.address || '-'}
+          </p>
+        </div>
+        <div style={{
+          padding: '16px', 
+          backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+          borderRadius: '10px', 
+          border: '2px solid #5A8C3A', 
+          boxShadow: '0 2px 6px rgba(45, 80, 22, 0.06)', 
+          transition: 'all 0.2s'
+        }} 
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 4px 12px rgba(45, 80, 22, 0.12)';
+        }} 
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 2px 6px rgba(45, 80, 22, 0.06)';
+        }}>
+          <p style={{
+            fontSize: '10px', 
+            color: '#5A8C3A', 
+            textTransform: 'uppercase', 
+            fontWeight: '700', 
+            margin: '0 0 6px 0', 
+            letterSpacing: '0.5px'
+          }}>
+            COC #
+          </p>
+          <p style={{fontSize: '15px', fontWeight: '700', color: '#1a3a0f', margin: 0}}>
+            {formData.cocNumber || '-'}
+          </p>
+        </div>
+        <div style={{
+          padding: '16px', 
+          backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+          borderRadius: '10px', 
+          border: '2px solid #5A8C3A', 
+          boxShadow: '0 2px 6px rgba(45, 80, 22, 0.06)', 
+          transition: 'all 0.2s'
+        }} 
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 4px 12px rgba(45, 80, 22, 0.12)';
+        }} 
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 2px 6px rgba(45, 80, 22, 0.06)';
+        }}>
+          <p style={{
+            fontSize: '10px', 
+            color: '#5A8C3A', 
+            textTransform: 'uppercase', 
+            fontWeight: '700', 
+            margin: '0 0 6px 0', 
+            letterSpacing: '0.5px'
+          }}>
+            OR #
+          </p>
+          <p style={{fontSize: '15px', fontWeight: '700', color: '#1a3a0f', margin: 0}}>
+            {formData.orNumber || '-'}
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    {/* Section 1: Policy Information */}
+    <div style={{
+      marginBottom: '10px', 
+      padding: '15px', 
+      backgroundColor: 'rgba(255, 255, 255, 0.6)', 
+      borderRadius: '10px', 
+      border: '1px solid rgba(90, 140, 58, 0.2)'
+    }}>
+      <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px'}}>
+        <div style={{width: '4px', height: '22px', backgroundColor: '#5A8C3A', borderRadius: '2px'}}></div>
+        <h4 style={{
+          fontSize: '13px', 
+          fontWeight: '700', 
+          color: '#2D5016', 
+          margin: 0, 
+          textTransform: 'uppercase', 
+          letterSpacing: '0.3px'
+        }}>
+          Policy Information
+        </h4>
+      </div>
+      <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px'}}>
+        <div style={{
+          padding: '12px', 
+          backgroundColor: 'rgba(248, 250, 252, 0.8)', 
+          borderRadius: '8px', 
+          border: '3px solid #a7d49b'
+        }}>
+          <p style={{fontSize: '10px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0'}}>Type</p>
+          <p style={{fontSize: '14px', fontWeight: '600', color: '#1a3a0f', margin: 0}}>{formData.cType || '-'}</p>
+        </div>
+        <div style={{
+          padding: '12px', 
+          backgroundColor: 'rgba(248, 250, 252, 0.8)', 
+          borderRadius: '8px', 
+          border: '3px solid #a7d49b'
+        }}>
+          <p style={{fontSize: '10px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0'}}>Policy #</p>
+          <p style={{fontSize: '14px', fontWeight: '600', color: '#1a3a0f', margin: 0}}>{formData.policyNumber || '-'}</p>
+        </div>
+        <div style={{
+          padding: '12px', 
+          backgroundColor: 'rgba(248, 250, 252, 0.8)', 
+          borderRadius: '8px', 
+          border: '3px solid #a7d49b'
+        }}>
+          <p style={{fontSize: '10px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0'}}>Issued</p>
+          <p style={{fontSize: '14px', fontWeight: '600', color: '#1a3a0f', margin: 0}}>{formData.dateIssued || '-'}</p>
+        </div>
+        <div style={{
+          padding: '12px', 
+          backgroundColor: 'rgba(248, 250, 252, 0.8)', 
+          borderRadius: '8px', 
+          border: '3px solid #a7d49b'
+        }}>
+          <p style={{fontSize: '10px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0'}}>Received</p>
+          <p style={{fontSize: '14px', fontWeight: '600', color: '#1a3a0f', margin: 0}}>{formData.dateReceived || '-'}</p>
+        </div>
+      </div>
+    </div>
 
-                {/* Section 2: Insurance Period */}
-                <div style={{marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #e5e7eb'}}>
-                  <h4 style={{fontSize: '11px', fontWeight: '700', color: '#2D5016', margin: '0 0 8px 0', textTransform: 'uppercase', letterSpacing: '0.3px'}}>Insurance Period</h4>
-                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px'}}>
-                    <div style={{padding: '8px', backgroundColor: '#f8fafc', borderRadius: '6px', borderLeft: '2px solid #5A8C3A'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>From</p>
-                      <p style={{fontSize: '12px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.insuranceFromDate ? `${formData.insuranceFromDate} ${formData.insuranceFromTime}` : '-'}</p>
-                    </div>
-                    <div style={{padding: '8px', backgroundColor: '#f8fafc', borderRadius: '6px', borderLeft: '2px solid #5A8C3A'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>To</p>
-                      <p style={{fontSize: '12px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.insuranceToDate ? `${formData.insuranceToDate} ${formData.insuranceToTime}` : '-'}</p>
-                    </div>
-                  </div>
-                </div>
+    {/* Section 2: Insurance Period */}
+    <div style={{
+      marginBottom: '12px', 
+      padding: '15px', 
+      backgroundColor: 'rgba(255, 255, 255, 0.6)', 
+      borderRadius: '10px', 
+      border: '1px solid rgba(90, 140, 58, 0.2)'
+    }}>
+      <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px'}}>
+        <div style={{width: '4px', height: '22px', backgroundColor: '#5A8C3A', borderRadius: '2px'}}></div>
+        <h4 style={{
+          fontSize: '13px', 
+          fontWeight: '700', 
+          color: '#2D5016', 
+          margin: 0, 
+          textTransform: 'uppercase', 
+          letterSpacing: '0.3px'
+        }}>
+          Insurance Period
+        </h4>
+      </div>
+      <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px'}}>
+        <div style={{
+          padding: '14px', 
+          backgroundColor: 'rgba(248, 250, 252, 0.8)', 
+          borderRadius: '8px', 
+          border: '3px solid #a7d49b'
+        }}>
+          <p style={{fontSize: '10px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0'}}>From</p>
+          <p style={{fontSize: '14px', fontWeight: '600', color: '#1a3a0f', margin: 0}}>
+            {formData.insuranceFromDate ? `${formData.insuranceFromDate} ${formData.insuranceFromTime}` : '-'}
+          </p>
+        </div>
+        <div style={{
+          padding: '12px', 
+          backgroundColor: 'rgba(248, 250, 252, 0.8)', 
+          borderRadius: '8px', 
+          border: '3px solid #a7d49b'
+        }}>
+          <p style={{fontSize: '10px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 4px 0'}}>To</p>
+          <p style={{fontSize: '14px', fontWeight: '600', color: '#1a3a0f', margin: 0}}>
+            {formData.insuranceToDate ? `${formData.insuranceToDate} ${formData.insuranceToTime}` : '-'}
+          </p>
+        </div>
+      </div>
+    </div>
 
-                {/* Section 3: Vehicle Details */}
-                <div style={{marginBottom: '12px', paddingBottom: '12px', borderBottom: '1px solid #e5e7eb'}}>
-                  <h4 style={{fontSize: '11px', fontWeight: '700', color: '#2D5016', margin: '0 0 8px 0', textTransform: 'uppercase', letterSpacing: '0.3px'}}>Vehicle Details</h4>
-                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px', marginBottom: '8px'}}>
-                    <div style={{padding: '8px', backgroundColor: '#f8fafc', borderRadius: '6px', borderLeft: '2px solid #5A8C3A'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>Model</p>
-                      <p style={{fontSize: '12px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.model || '-'}</p>
-                    </div>
-                    <div style={{padding: '8px', backgroundColor: '#f8fafc', borderRadius: '6px', borderLeft: '2px solid #5A8C3A'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>Make</p>
-                      <p style={{fontSize: '12px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.make || '-'}</p>
-                    </div>
-                    <div style={{padding: '8px', backgroundColor: '#f8fafc', borderRadius: '6px', borderLeft: '2px solid #5A8C3A'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>Body Type</p>
-                      <p style={{fontSize: '12px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.bodyType || '-'}</p>
-                    </div>
-                    <div style={{padding: '8px', backgroundColor: '#f8fafc', borderRadius: '6px', borderLeft: '2px solid #5A8C3A'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>Color</p>
-                      <p style={{fontSize: '12px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.color || '-'}</p>
-                    </div>
-                  </div>
-                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px'}}>
-                    <div style={{padding: '8px', backgroundColor: '#f8fafc', borderRadius: '6px', borderLeft: '2px solid #5A8C3A'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>MV File</p>
-                      <p style={{fontSize: '12px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.mvFileNo || '-'}</p>
-                    </div>
-                    <div style={{padding: '8px', backgroundColor: '#f8fafc', borderRadius: '6px', borderLeft: '2px solid #5A8C3A'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>Plate</p>
-                      <p style={{fontSize: '12px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.plateNo || '-'}</p>
-                    </div>
-                    <div style={{padding: '8px', backgroundColor: '#f8fafc', borderRadius: '6px', borderLeft: '2px solid #5A8C3A'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>Chassis</p>
-                      <p style={{fontSize: '12px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.serialChassisNo || '-'}</p>
-                    </div>
-                    <div style={{padding: '8px', backgroundColor: '#f8fafc', borderRadius: '6px', borderLeft: '2px solid #5A8C3A'}}>
-                      <p style={{fontSize: '9px', color: '#6b7280', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>Motor</p>
-                      <p style={{fontSize: '12px', fontWeight: '600', color: '#1f2937', margin: 0}}>{formData.motorNo || '-'}</p>
-                    </div>
-                  </div>
-                </div>
+    {/* Section 3: Vehicle Details */}
+    <div style={{
+      marginBottom: '12px', 
+      padding: '15px', 
+      backgroundColor: 'rgba(255, 255, 255, 0.6)', 
+      borderRadius: '10px', 
+      border: '1px solid rgba(90, 140, 58, 0.2)'
+    }}>
+      <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px'}}>
+        <div style={{width: '4px', height: '22px', backgroundColor: '#5A8C3A', borderRadius: '2px'}}></div>
+        <h4 style={{
+          fontSize: '13px', 
+          fontWeight: '700', 
+          color: '#2D5016', 
+          margin: 0, 
+          textTransform: 'uppercase', 
+          letterSpacing: '0.3px'
+        }}>
+          Vehicle Details
+        </h4>
+      </div>
+      <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px', marginBottom: '10px'}}>
+        <div style={{padding: '10px', backgroundColor: 'rgba(248, 250, 252, 0.8)', borderRadius: '8px', border: '3px solid #a7d49b'}}>
+          <p style={{fontSize: '9px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>Model</p>
+          <p style={{fontSize: '13px', fontWeight: '600', color: '#1a3a0f', margin: 0}}>{formData.model || '-'}</p>
+        </div>
+        <div style={{padding: '10px', backgroundColor: 'rgba(248, 250, 252, 0.8)', borderRadius: '8px', border: '3px solid #a7d49b'}}>
+          <p style={{fontSize: '9px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>Make</p>
+          <p style={{fontSize: '13px', fontWeight: '600', color: '#1a3a0f', margin: 0}}>{formData.make || '-'}</p>
+        </div>
+        <div style={{padding: '10px', backgroundColor: 'rgba(248, 250, 252, 0.8)', borderRadius: '8px', border: '3px solid #a7d49b'}}>
+          <p style={{fontSize: '9px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>Body Type</p>
+          <p style={{fontSize: '13px', fontWeight: '600', color: '#1a3a0f', margin: 0}}>{formData.bodyType || '-'}</p>
+        </div>
+        <div style={{padding: '10px', backgroundColor: 'rgba(248, 250, 252, 0.8)', borderRadius: '8px', border: '3px solid #a7d49b'}}>
+          <p style={{fontSize: '9px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>Color</p>
+          <p style={{fontSize: '13px', fontWeight: '600', color: '#1a3a0f', margin: 0}}>{formData.color || '-'}</p>
+        </div>
+      </div>
+      <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '10px'}}>
+        <div style={{padding: '10px', backgroundColor: 'rgba(248, 250, 252, 0.8)', borderRadius: '8px', border: '3px solid #a7d49b'}}>
+          <p style={{fontSize: '9px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>MV File</p>
+          <p style={{fontSize: '13px', fontWeight: '600', color: '#1a3a0f', margin: 0}}>{formData.mvFileNo || '-'}</p>
+        </div>
+        <div style={{padding: '10px', backgroundColor: 'rgba(248, 250, 252, 0.8)', borderRadius: '8px', border: '3px solid #a7d49b'}}>
+          <p style={{fontSize: '9px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>Plate</p>
+          <p style={{fontSize: '13px', fontWeight: '600', color: '#1a3a0f', margin: 0}}>{formData.plateNo || '-'}</p>
+        </div>
+        <div style={{padding: '10px', backgroundColor: 'rgba(248, 250, 252, 0.8)', borderRadius: '8px', border: '3px solid #a7d49b'}}>
+          <p style={{fontSize: '9px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>Chassis</p>
+          <p style={{fontSize: '13px', fontWeight: '600', color: '#1a3a0f', margin: 0}}>{formData.serialChassisNo || '-'}</p>
+        </div>
+        <div style={{padding: '10px', backgroundColor: 'rgba(248, 250, 252, 0.8)', borderRadius: '8px', border: '3px solid #a7d49b'}}>
+          <p style={{fontSize: '9px', color: '#5A8C3A', textTransform: 'uppercase', fontWeight: '600', margin: '0 0 3px 0'}}>Motor</p>
+          <p style={{fontSize: '13px', fontWeight: '600', color: '#1a3a0f', margin: 0}}>{formData.motorNo || '-'}</p>
+        </div>
+      </div>
+    </div>
 
-                {/* Section 4: Insurance Rates */}
-                <div style={{marginBottom: '12px'}}>
-                  <h4 style={{fontSize: '11px', fontWeight: '700', color: '#2D5016', margin: '0 0 8px 0', textTransform: 'uppercase', letterSpacing: '0.3px'}}>Rates</h4>
-                  <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr 1fr', gap: '6px', marginBottom: '8px'}}>
-                    <div style={{padding: '6px', backgroundColor: '#f8fafc', borderRadius: '6px', borderLeft: '2px solid #5A8C3A', textAlign: 'center'}}>
-                      <p style={{fontSize: '8px', color: '#6b7280', fontWeight: '600', margin: '0 0 2px 0'}}>Premium</p>
-                      <p style={{fontSize: '11px', fontWeight: '700', color: '#2D5016', margin: 0}}>₱{rates.premium.toFixed(2)}</p>
-                    </div>
-                    <div style={{padding: '6px', backgroundColor: '#f8fafc', borderRadius: '6px', borderLeft: '2px solid #5A8C3A', textAlign: 'center'}}>
-                      <p style={{fontSize: '8px', color: '#6b7280', fontWeight: '600', margin: '0 0 2px 0'}}>Stamps</p>
-                      <p style={{fontSize: '11px', fontWeight: '700', color: '#2D5016', margin: 0}}>₱{rates.docStamps.toFixed(2)}</p>
-                    </div>
-                    <div style={{padding: '6px', backgroundColor: '#f8fafc', borderRadius: '6px', borderLeft: '2px solid #5A8C3A', textAlign: 'center'}}>
-                      <p style={{fontSize: '8px', color: '#6b7280', fontWeight: '600', margin: '0 0 2px 0'}}>VAT</p>
-                      <p style={{fontSize: '11px', fontWeight: '700', color: '#2D5016', margin: 0}}>₱{rates.eVat.toFixed(2)}</p>
-                    </div>
-                    <div style={{padding: '6px', backgroundColor: '#f8fafc', borderRadius: '6px', borderLeft: '2px solid #5A8C3A', textAlign: 'center'}}>
-                      <p style={{fontSize: '8px', color: '#6b7280', fontWeight: '600', margin: '0 0 2px 0'}}>LGT</p>
-                      <p style={{fontSize: '11px', fontWeight: '700', color: '#2D5016', margin: 0}}>₱{rates.lgt.toFixed(2)}</p>
-                    </div>
-                    <div style={{padding: '6px', backgroundColor: '#f8fafc', borderRadius: '6px', borderLeft: '2px solid #5A8C3A', textAlign: 'center'}}>
-                      <p style={{fontSize: '8px', color: '#6b7280', fontWeight: '600', margin: '0 0 2px 0'}}>Fee</p>
-                      <p style={{fontSize: '11px', fontWeight: '700', color: '#2D5016', margin: 0}}>₱{rates.authFee.toFixed(2)}</p>
-                    </div>
-                    <div style={{padding: '6px', backgroundColor: '#f8fafc', borderRadius: '6px', borderLeft: '2px solid #5A8C3A', textAlign: 'center'}}>
-                      <p style={{fontSize: '8px', color: '#6b7280', fontWeight: '600', margin: '0 0 2px 0'}}>Other</p>
-                      <p style={{fontSize: '11px', fontWeight: '700', color: '#2D5016', margin: 0}}>₱{rates.otherCharges.toFixed(2)}</p>
-                    </div>
-                  </div>
-                  <div style={{padding: '10px', backgroundColor: '#dcfce7', borderRadius: '6px', borderLeft: '3px solid #2D5016', textAlign: 'center'}}>
-                    <p style={{fontSize: '10px', color: '#165035', margin: '0 0 3px 0', fontWeight: '600'}}>TOTAL</p>
-                    <p style={{fontSize: '18px', fontWeight: '800', color: '#1a3a0f', margin: 0}}>₱{rates.total.toFixed(2)}</p>
-                  </div>
-                </div>
+    {/* Section 4: Insurance Rates - Highlighted */}
+    <div style={{
+      marginBottom: '12px', 
+      padding: '15px', 
+      background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)', 
+      borderRadius: '12px', 
+      border: '2px solid #6ee7b7', 
+      boxShadow: '0 4px 12px rgba(45, 80, 22, 0.1)'
+    }}>
+      <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px'}}>
+        <div style={{width: '5px', height: '24px', backgroundColor: '#059669', borderRadius: '3px'}}></div>
+        <h4 style={{
+          fontSize: '14px', 
+          fontWeight: '800', 
+          color: '#065f46', 
+          margin: 0, 
+          textTransform: 'uppercase', 
+          letterSpacing: '0.5px'
+        }}>
+          Insurance Rates
+        </h4>
+      </div>
+      <div style={{display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '8px', marginBottom: '16px'}}>
+        <div style={{
+          padding: '10px', 
+          backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+          borderRadius: '8px', 
+          border: '2px solid #a7f3d0', 
+          textAlign: 'center', 
+          transition: 'all 0.2s'
+        }} 
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.borderColor = '#6ee7b7';
+        }} 
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.borderColor = '#a7f3d0';
+        }}>
+          <p style={{fontSize: '10px', color: '#059669', fontWeight: '700', margin: '0 0 4px 0', textTransform: 'uppercase'}}>Premium</p>
+          <p style={{fontSize: '13px', fontWeight: '800', color: '#064e3b', margin: 0}}>₱{rates.premium.toFixed(2)}</p>
+        </div>
+        <div style={{
+          padding: '10px', 
+          backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+          borderRadius: '8px', 
+          border: '2px solid #a7f3d0', 
+          textAlign: 'center', 
+          transition: 'all 0.2s'
+        }} 
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.borderColor = '#6ee7b7';
+        }} 
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.borderColor = '#a7f3d0';
+        }}>
+          <p style={{fontSize: '10px', color: '#059669', fontWeight: '700', margin: '0 0 4px 0', textTransform: 'uppercase'}}>Stamps</p>
+          <p style={{fontSize: '13px', fontWeight: '800', color: '#064e3b', margin: 0}}>₱{rates.docStamps.toFixed(2)}</p>
+        </div>
+        <div style={{
+          padding: '10px', 
+          backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+          borderRadius: '8px', 
+          border: '2px solid #a7f3d0', 
+          textAlign: 'center', 
+          transition: 'all 0.2s'
+        }} 
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.borderColor = '#6ee7b7';
+        }} 
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.borderColor = '#a7f3d0';
+        }}>
+          <p style={{fontSize: '10px', color: '#059669', fontWeight: '700', margin: '0 0 4px 0', textTransform: 'uppercase'}}>VAT</p>
+          <p style={{fontSize: '13px', fontWeight: '800', color: '#064e3b', margin: 0}}>₱{rates.eVat.toFixed(2)}</p>
+        </div>
+        <div style={{
+          padding: '10px', 
+          backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+          borderRadius: '8px', 
+          border: '2px solid #a7f3d0', 
+          textAlign: 'center', 
+          transition: 'all 0.2s'
+        }} 
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.borderColor = '#6ee7b7';
+        }} 
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.borderColor = '#a7f3d0';
+        }}>
+          <p style={{fontSize: '10px', color: '#059669', fontWeight: '700', margin: '0 0 4px 0', textTransform: 'uppercase'}}>LGT</p>
+          <p style={{fontSize: '13px', fontWeight: '800', color: '#064e3b', margin: 0}}>₱{rates.lgt.toFixed(2)}</p>
+        </div>
+        <div style={{
+          padding: '10px', 
+          backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+          borderRadius: '8px', 
+          border: '2px solid #a7f3d0', 
+          textAlign: 'center', 
+          transition: 'all 0.2s'
+        }} 
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.borderColor = '#6ee7b7';
+        }} 
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.borderColor = '#a7f3d0';
+        }}>
+          <p style={{fontSize: '10px', color: '#059669', fontWeight: '700', margin: '0 0 4px 0', textTransform: 'uppercase'}}>Fee</p>
+          <p style={{fontSize: '13px', fontWeight: '800', color: '#064e3b', margin: 0}}>₱{rates.authFee.toFixed(2)}</p>
+        </div>
+        <div style={{
+          padding: '10px', 
+          backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+          borderRadius: '8px', 
+          border: '2px solid #a7f3d0', 
+          textAlign: 'center', 
+          transition: 'all 0.2s'
+        }} 
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.borderColor = '#6ee7b7';
+        }} 
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.borderColor = '#a7f3d0';
+        }}>
+          <p style={{fontSize: '10px', color: '#059669', fontWeight: '700', margin: '0 0 4px 0', textTransform: 'uppercase'}}>Other</p>
+          <p style={{fontSize: '13px', fontWeight: '800', color: '#064e3b', margin: 0}}>₱{rates.otherCharges.toFixed(2)}</p>
+        </div>
+      </div>
+      <div style={{
+        padding: '16px 20px', 
+        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', 
+        borderRadius: '10px', 
+        textAlign: 'center', 
+        boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)'
+      }}>
+        <p style={{
+          fontSize: '11px', 
+          color: '#d1fae5', 
+          margin: '0 0 4px 0', 
+          fontWeight: '700', 
+          textTransform: 'uppercase', 
+          letterSpacing: '1px'
+        }}>
+          Total Premium
+        </p>
+        <p style={{fontSize: '30px', fontWeight: '900', color: '#ffffff', margin: 0, letterSpacing: '-0.5px'}}>
+          ₱{rates.total.toFixed(2)}
+        </p>
+      </div>
+    </div>
 
-                <div style={{padding: '10px', backgroundColor: '#ecfdf5', borderRadius: '6px', borderLeft: '2px solid #2D5016'}}>
-                  <p style={{fontSize: '11px', color: '#165035', margin: 0}}>
-                    ✓ Ready to submit. Click <strong>Submit</strong> to finalize.
-                  </p>
-                </div>
-              </div>
-            )}
+    {/* Ready to Submit Notice */}
+    <div style={{
+      padding: '16px 20px', 
+      background: 'linear-gradient(90deg, #d1fae5 0%, #a7f3d0 100%)', 
+      borderRadius: '10px', 
+      border: '2px solid #6ee7b7', 
+      display: 'flex', 
+      alignItems: 'center', 
+      gap: '12px', 
+      boxShadow: '0 2px 8px rgba(16, 185, 129, 0.15)'
+    }}>
+      <div style={{
+        width: '32px', 
+        height: '32px', 
+        borderRadius: '50%', 
+        backgroundColor: '#10b981', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        flexShrink: 0
+      }}>
+        <span style={{fontSize: '18px', color: 'white', fontWeight: 'bold'}}>✓</span>
+      </div>
+      <p style={{fontSize: '13px', color: '#065f46', margin: 0, fontWeight: '600', lineHeight: '1.5'}}>
+        All information verified and ready to submit. Click <strong>Submit</strong> below to finalize your application.
+      </p>
+    </div>
+  </div>
+)}
           </div>
         </div>
 
@@ -1257,6 +1963,44 @@ function Menu() {
           >
             Cancel
           </button>
+
+          {currentStep === 1 && (
+            <button 
+              onClick={handleClearForm}
+              aria-label="Clear all form data"
+              onFocus={(e) => {
+                e.target.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.2)';
+              }}
+              onBlur={(e) => {
+                e.target.style.boxShadow = '';
+              }}
+              style={{
+                padding: '12px 28px',
+                backgroundColor: '#fee2e2',
+                color: '#991b1b',
+                border: '1.5px solid #fecaca',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#fca5a5';
+                e.target.style.borderColor = '#ef4444';
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 4px 8px rgba(239, 68, 68, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = '#fee2e2';
+                e.target.style.borderColor = '#fecaca';
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.boxShadow = '';
+              }}
+            >
+              Clear Form
+            </button>
+          )}
 
           {currentStep > 1 && (
             <button 

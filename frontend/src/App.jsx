@@ -10,7 +10,6 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/dashboard" element={<div style={{ padding: '32px' }}><h1 style={{ fontSize: '24px', fontWeight: 'bold' }}>Dashboard - Login Successful!</h1></div>} />
         <Route path="/records" element={<Records />} />
         <Route path="/menu" element={<Menu />} />
       </Routes>
