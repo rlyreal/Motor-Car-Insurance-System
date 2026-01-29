@@ -735,10 +735,10 @@ function Menu() {
                         e.target.style.backgroundColor = '#ffffff';
                       }} style={{...inputBaseStyle, borderColor: touched.cType && !formData.cType ? '#ef4444' : inputBaseStyle.borderColor}}>
                         <option>Select Type</option>
-                        <option>MC</option>
-                        <option>PC</option>
-                        <option>CV</option>
-                        <option>LTO</option>
+                        <option>MC-CTPL-CEB</option>
+                        <option>PC-CTPL-CEB</option>
+                        <option>CV-CTPL-CEB</option>
+                        <option>LTO-CTPL-CEB</option>
                       </select>
                     </div>
                     <div>
