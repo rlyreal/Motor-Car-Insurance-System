@@ -311,7 +311,8 @@ function Menu() {
   };
 
   return (
-    <div style={{minHeight: '100vh', backgroundColor: '#1E6B47', padding: '16px 16px'}}>
+    
+    <div style={{minHeight: '100vh', backgroundColor: '#1E6B47', padding: '0'}}>
       <style>{`
         @keyframes fadeIn {
           from {
@@ -373,25 +374,28 @@ function Menu() {
         </div>
       )}
       
-      {/* Modern Header */}
-      <div style={{maxWidth: '1400px', margin: '0 auto', marginBottom: '16px'}}>
-        <div style={{background: 'transparent', borderRadius: '16px', padding: '24px', boxShadow: '0 8px 24px rgba(45, 80, 22, 0.12)', border: 'none', position: 'relative', overflow: 'visible'}}>
-          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '32px', position: 'relative', zIndex: 1, flexDirection: 'column', textAlign: 'center'}}>
-            <div style={{flexShrink: 0, backgroundColor: 'rgba(255, 255, 255, 0.95)', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-              <img src="/images/alpha.png" alt="Alpha Logo" style={{height: '65px', objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.08))'}} />
-            </div>
-            <div style={{flex: 1}}>
-              <div style={{display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px', justifyContent: 'center'}}>
-                <h1 style={{fontSize: '40px', fontWeight: '900', color: '#ffffff', margin: 0, letterSpacing: '-0.8px'}}>Underwriting System Menu</h1>
+      {/* Modern Nav-style Header */}
+<div className="nav-header-container" style={{maxWidth: '100%', margin: '0', padding: '0', width: '100%'}}>
+        <div className="nav-header" style={{background: '#fff', borderRadius: '0px', padding: '12px 20px', boxShadow: '0 8px 24px rgba(45, 80, 22, 0.12)', border: 'none', position: 'relative', overflow: 'visible'}}>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', position: 'relative', zIndex: 1}}>
+            {/* Left: logo + title */}
+            <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
+              <div className="logo" style={{flexShrink: 0, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                <img src="/images/alpha.png" alt="Alpha Logo" style={{height: '60px', objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.08))'}} />
               </div>
-              <p style={{fontSize: '16px', color: '#e5e7eb', margin: 0, fontWeight: '500', letterSpacing: '0.3px'}}>Motor Car Insurance · Complete the form to proceed</p>
+              <div className="title" style={{display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
+                <div style={{display: 'flex', alignItems: 'baseline', gap: '8px'}}>
+                  <h1 style={{fontSize: '22px', fontWeight: 900, color: '#1E6B47', margin: 0, letterSpacing: '-0.4px'}}>Underwriting System Menu</h1>
+                </div>
+                <p style={{fontSize: '12px', color: '#1E6B47', margin: 0, fontWeight: 500}}>Motor Car Insurance · Complete the form to proceed</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Timeline Progress Indicator - Enhanced Full Width */}
-      <div style={{width: '95%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '16px', paddingBottom: '16px', marginBottom: '24px'}} role="progressbar" aria-valuenow={currentStep} aria-valuemin={1} aria-valuemax={3} aria-label={`Step ${currentStep} of 3`}>
+      <div style={{width: '95%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '16px', paddingBottom: '16px', marginBottom: '26px', marginTop: '26px'}} role="progressbar" aria-valuenow={currentStep} aria-valuemin={1} aria-valuemax={3} aria-label={`Step ${currentStep} of 3`}>
         <div style={{maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'center', alignItems: 'center', paddingX: '16px'}}>
           <div style={{display: 'flex', alignItems: 'center', gap: '0', position: 'relative', width: '100%', maxWidth: '1000px'}}>
             {[{label: 'Info', step: 1}, {label: 'Rates', step: 2}, {label: 'Review', step: 3}].map((step, idx) => (
