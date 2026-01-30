@@ -151,7 +151,10 @@ function Menu() {
 
   const handleBlur = (e) => {
     const { name } = e.target;
-    setTouched(prev => ({ ...prev, [name]: true }));
+    setTouched(prev => ({
+      ...prev,
+      [name]: true
+    }));
   };
 
   const handleBack = () => {
@@ -234,7 +237,7 @@ function Menu() {
         cocNumber: '',
         orNumber: '',
         policyNumber: '',
-        year: '2025',
+        year: '',
         dateIssued: '',
         dateReceived: '',
         agent: '',
@@ -259,6 +262,7 @@ function Menu() {
         weightClass: '',
       };
       setFormData(emptyFormData);
+      setTouched({});
       localStorage.removeItem('menuFormData');
       showToast('Form cleared successfully', 'success');
       setClearFormConfirm(false);
@@ -290,27 +294,15 @@ function Menu() {
 
   const completionPercentage = getFormCompletionPercentage();
 
-  const focusStyle = {
-    outline: 'none',
-    borderColor: '#1a5f3f',
-    boxShadow: '0 0 0 3px rgba(26, 95, 63, 0.1)',
-    transition: 'all 0.2s'
-  };
-
   const stepTransitionStyle = {
     animation: 'fadeIn 0.4s ease-in-out',
     transition: 'opacity 0.4s ease-in-out'
   };
 
-  const inputFocusStyle = {
-    ...focusStyle,
-    border: '2px solid #1a5f3f' 
-  };
-
   const inputBaseStyle = {
     width: '100%',
     padding: '11px 14px',
-    border: '1.5px solid #d1d5db',
+    border: '1.5px solid #9ca3af',
     borderRadius: '8px',
     fontSize: '13px',
     outline: 'none',
@@ -572,15 +564,11 @@ function Menu() {
                   aria-label="Assured name - required"
                   aria-required="true"
                   onFocus={(e) => {
-                    e.target.style.borderColor = '#1a5f3f';
                     e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                     e.target.style.backgroundColor = '#f8fdf9';
                   }}
-                  style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: touched.assured && !formData.assured ? '#ef4444' : inputBaseStyle.borderColor}}
+                  style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: (touched.assured && !formData.assured) ? '#ef4444' : inputBaseStyle.borderColor}}
                 />
-                {touched.assured && !formData.assured && (
-                  <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
-                )}
               </div>
 
               <div style={{marginBottom: '16px'}}>
@@ -596,15 +584,11 @@ function Menu() {
                   aria-label="Address - required"
                   aria-required="true"
                   onFocus={(e) => {
-                    e.target.style.borderColor = '#1a5f3f';
                     e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                     e.target.style.backgroundColor = '#f8fdf9';
                   }}
-                  style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: touched.address && !formData.address ? '#ef4444' : inputBaseStyle.borderColor}}
+                  style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: (touched.address && !formData.address) ? '#ef4444' : inputBaseStyle.borderColor}}
                 />
-                {touched.address && !formData.address && (
-                  <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
-                )}
               </div>
 
               <div style={{display: 'flex', gap: '12px'}}>
@@ -625,15 +609,11 @@ function Menu() {
                     aria-required="true"
                     inputMode="numeric"
                     onFocus={(e) => {
-                      e.target.style.borderColor = '#1a5f3f';
                       e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                       e.target.style.backgroundColor = '#f8fdf9';
                     }}
-                    style={{...inputBaseStyle, borderColor: touched.cocNumber && !formData.cocNumber ? '#ef4444' : inputBaseStyle.borderColor}}
+                    style={{...inputBaseStyle, borderColor: (touched.cocNumber && !formData.cocNumber) ? '#ef4444' : inputBaseStyle.borderColor}}
                   />
-                  {touched.cocNumber && !formData.cocNumber && (
-                    <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
-                  )}
                 </div>
 
                 <div style={{flex: 1}}>
@@ -652,15 +632,11 @@ function Menu() {
                     aria-label="OR Number - numbers only"
                     inputMode="numeric"
                     onFocus={(e) => {
-                      e.target.style.borderColor = '#1a5f3f';
                       e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                       e.target.style.backgroundColor = '#f8fdf9';
                     }}
-                    style={{...inputBaseStyle, borderColor: touched.orNumber && !formData.orNumber ? '#ef4444' : inputBaseStyle.borderColor}}
+                    style={{...inputBaseStyle, borderColor: (touched.orNumber && !formData.orNumber) ? '#ef4444' : inputBaseStyle.borderColor}}
                   />
-                  {touched.orNumber && !formData.orNumber && (
-                    <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
-                  )}
                 </div>
               </div>
             </div>
@@ -722,23 +698,18 @@ function Menu() {
                     </span>
                   </div>
                   
-                  <div style={{display: 'grid', gridTemplateColumns: '80px 1fr 120px 150px 150px', gap: '16px', alignItems: 'flex-end'}}>
+                  <div style={{display: 'grid', gridTemplateColumns: '150px 1fr 100px 150px 150px', gap: '16px', alignItems: 'flex-end'}}>
                     <div>
                       <label htmlFor="type-select" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Type <span style={{color: '#ef4444'}}>*</span></label>
-                      <select id="type-select" name="cType" value={formData.cType} onChange={handleChange} aria-label="Policy type" onFocus={(e) => {
-                        e.target.style.borderColor = '#1a5f3f';
+                      <select id="type-select" name="cType" value={formData.cType} onChange={handleChange} onBlur={handleBlur} aria-label="Policy type" onFocus={(e) => {
                         e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                         e.target.style.backgroundColor = '#f8fdf9';
-                      }} onBlur={(e) => {
-                        e.target.style.boxShadow = '';
-                        e.target.style.borderColor = '#d1d5db';
-                        e.target.style.backgroundColor = '#ffffff';
-                      }} style={{...inputBaseStyle, borderColor: touched.cType && !formData.cType ? '#ef4444' : inputBaseStyle.borderColor}}>
+                      }} style={{...inputBaseStyle, borderColor: (touched.cType && !formData.cType) ? '#ef4444' : inputBaseStyle.borderColor}}>
                         <option>Select Type</option>
-                        <option>MC</option>
-                        <option>PC</option>
-                        <option>CV</option>
-                        <option>LTO</option>
+                        <option>MC-CTPL-CEB</option>
+                        <option>PC-CTPL-CEB</option>
+                        <option>CV-CTPL-CEB</option>
+                        <option>LTO-CTPL-CEB</option>
                       </select>
                     </div>
                     <div>
@@ -758,27 +729,18 @@ function Menu() {
                         aria-required="true"
                         inputMode="numeric"
                         onFocus={(e) => {
-                          e.target.style.borderColor = '#1a5f3f';
                           e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                           e.target.style.backgroundColor = '#f8fdf9';
                         }}
-                        style={{...inputBaseStyle, borderColor: touched.policyNumber && !formData.policyNumber ? '#ef4444' : inputBaseStyle.borderColor}}
+                        style={{...inputBaseStyle, borderColor: (touched.policyNumber && !formData.policyNumber) ? '#ef4444' : inputBaseStyle.borderColor}}
                       />
-                      {touched.policyNumber && !formData.policyNumber && (
-                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
-                      )}
                     </div>
                     <div>
                       <label htmlFor="year-select" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Year <span style={{color: '#ef4444'}}>*</span></label>
-                      <select id="year-select" aria-label="Policy year" onFocus={(e) => {
-                        e.target.style.borderColor = '#1a5f3f';
+                      <select id="year-select" name="year" value={formData.year} onChange={handleChange} onBlur={handleBlur} aria-label="Policy year" onFocus={(e) => {
                         e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                         e.target.style.backgroundColor = '#f8fdf9';
-                      }} onBlur={(e) => {
-                        e.target.style.boxShadow = '';
-                        e.target.style.borderColor = '#d1d5db';
-                        e.target.style.backgroundColor = '#ffffff';
-                      }} style={{...inputBaseStyle, borderColor: touched.year && !formData.year ? '#ef4444' : inputBaseStyle.borderColor}}>
+                      }} style={{...inputBaseStyle, borderColor: (touched.year && !formData.year) ? '#ef4444' : inputBaseStyle.borderColor}}>
                         <option>Select</option>
                         <option>2026</option>
                         <option>2025</option>
@@ -796,16 +758,17 @@ function Menu() {
                         onBlur={handleBlur}
                         aria-label="Date issued - required"
                         aria-required="true"
+                        onClick={(e) => {
+                          if (e.target.showPicker) {
+                            e.target.showPicker();
+                          }
+                        }}
                         onFocus={(e) => {
-                          e.target.style.borderColor = '#1a5f3f';
                           e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                           e.target.style.backgroundColor = '#f8fdf9';
                         }}
-                        style={{...inputBaseStyle, borderColor: touched.dateIssued && !formData.dateIssued ? '#ef4444' : inputBaseStyle.borderColor}}
+                        style={{...inputBaseStyle, borderColor: (touched.dateIssued && !formData.dateIssued) ? '#ef4444' : inputBaseStyle.borderColor, cursor: 'pointer'}}
                       />
-                      {touched.dateIssued && !formData.dateIssued && (
-                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
-                      )}
                     </div>
                     <div>
                       <label htmlFor="date-received-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Received <span style={{color: '#ef4444'}}>*</span></label>
@@ -818,16 +781,17 @@ function Menu() {
                         onBlur={handleBlur}
                         aria-label="Date received - required"
                         aria-required="true"
+                        onClick={(e) => {
+                          if (e.target.showPicker) {
+                            e.target.showPicker();
+                          }
+                        }}
                         onFocus={(e) => {
-                          e.target.style.borderColor = '#1a5f3f';
                           e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                           e.target.style.backgroundColor = '#f8fdf9';
                         }}
-                        style={{...inputBaseStyle, borderColor: touched.dateReceived && !formData.dateReceived ? '#ef4444' : inputBaseStyle.borderColor}}
+                        style={{...inputBaseStyle, borderColor: (touched.dateReceived && !formData.dateReceived) ? '#ef4444' : inputBaseStyle.borderColor, cursor: 'pointer'}}
                       />
-                      {touched.dateReceived && !formData.dateReceived && (
-                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -874,16 +838,17 @@ function Menu() {
                         onBlur={handleBlur}
                         aria-label="Insurance from date - required"
                         aria-required="true"
+                        onClick={(e) => {
+                          if (e.target.showPicker) {
+                            e.target.showPicker();
+                          }
+                        }}
                         onFocus={(e) => {
-                          e.target.style.borderColor = '#1a5f3f';
                           e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                           e.target.style.backgroundColor = '#f8fdf9';
                         }}
-                        style={{...inputBaseStyle, borderColor: touched.insuranceFromDate && !formData.insuranceFromDate ? '#ef4444' : inputBaseStyle.borderColor}}
+                        style={{...inputBaseStyle, borderColor: (touched.insuranceFromDate && !formData.insuranceFromDate) ? '#ef4444' : inputBaseStyle.borderColor, cursor: 'pointer'}}
                       />
-                      {touched.insuranceFromDate && !formData.insuranceFromDate && (
-                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
-                      )}
                     </div>
                     <div>
                       <label htmlFor="to-date-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>To Date <span style={{color: '#ef4444'}}>*</span></label>
@@ -896,16 +861,17 @@ function Menu() {
                         onBlur={handleBlur}
                         aria-label="Insurance to date - required"
                         aria-required="true"
+                        onClick={(e) => {
+                          if (e.target.showPicker) {
+                            e.target.showPicker();
+                          }
+                        }}
                         onFocus={(e) => {
-                          e.target.style.borderColor = '#1a5f3f';
                           e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                           e.target.style.backgroundColor = '#f8fdf9';
                         }}
-                        style={{...inputBaseStyle, borderColor: touched.insuranceToDate && !formData.insuranceToDate ? '#ef4444' : inputBaseStyle.borderColor}}
+                        style={{...inputBaseStyle, borderColor: (touched.insuranceToDate && !formData.insuranceToDate) ? '#ef4444' : inputBaseStyle.borderColor, cursor: 'pointer'}}
                       />
-                      {touched.insuranceToDate && !formData.insuranceToDate && (
-                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -953,12 +919,12 @@ function Menu() {
                         placeholder="Enter model"
                         aria-label="Vehicle model - required"
                         aria-required="true"
-                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
-                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s', textTransform: 'uppercase', borderColor: touched.model && !formData.model ? '#ef4444' : '#e5e7eb'}} 
+                        onFocus={(e) => {
+                          e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
+                          e.target.style.backgroundColor = '#f8fdf9';
+                        }}
+                        style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: (touched.model && !formData.model) ? '#ef4444' : inputBaseStyle.borderColor}} 
                       />
-                      {touched.model && !formData.model && (
-                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
-                      )}
                     </div>
                     <div>
                       <label htmlFor="make-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Make <span style={{color: '#ef4444'}}>*</span></label>
@@ -972,12 +938,12 @@ function Menu() {
                         placeholder="Enter make"
                         aria-label="Vehicle make - required"
                         aria-required="true"
-                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
-                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s', textTransform: 'uppercase', borderColor: touched.make && !formData.make ? '#ef4444' : '#e5e7eb'}} 
+                        onFocus={(e) => {
+                          e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
+                          e.target.style.backgroundColor = '#f8fdf9';
+                        }}
+                        style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: (touched.make && !formData.make) ? '#ef4444' : inputBaseStyle.borderColor}}
                       />
-                      {touched.make && !formData.make && (
-                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
-                      )}
                     </div>
                     <div>
                       <label htmlFor="body-type-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Body Type <span style={{color: '#ef4444'}}>*</span></label>
@@ -991,12 +957,12 @@ function Menu() {
                         placeholder="Enter type"
                         aria-label="Vehicle body type - required"
                         aria-required="true"
-                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
-                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s', textTransform: 'uppercase', borderColor: touched.bodyType && !formData.bodyType ? '#ef4444' : '#e5e7eb'}} 
+                        onFocus={(e) => {
+                          e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
+                          e.target.style.backgroundColor = '#f8fdf9';
+                        }}
+                        style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: (touched.bodyType && !formData.bodyType) ? '#ef4444' : inputBaseStyle.borderColor}}
                       />
-                      {touched.bodyType && !formData.bodyType && (
-                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
-                      )}
                     </div>
                   </div>
 
@@ -1013,12 +979,12 @@ function Menu() {
                         placeholder="Color"
                         aria-label="Vehicle color - required"
                         aria-required="true"
-                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
-                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s', textTransform: 'uppercase', borderColor: touched.color && !formData.color ? '#ef4444' : '#e5e7eb'}} 
+                        onFocus={(e) => {
+                          e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
+                          e.target.style.backgroundColor = '#f8fdf9';
+                        }}
+                        style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: (touched.color && !formData.color) ? '#ef4444' : inputBaseStyle.borderColor}}
                       />
-                      {touched.color && !formData.color && (
-                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
-                      )}
                     </div>
                     <div>
                       <label htmlFor="mv-file-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>MV File No. <span style={{color: '#ef4444'}}>*</span></label>
@@ -1032,12 +998,12 @@ function Menu() {
                         placeholder="File no."
                         aria-label="Motor vehicle file number - required"
                         aria-required="true"
-                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
-                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s', textTransform: 'uppercase', borderColor: touched.mvFileNo && !formData.mvFileNo ? '#ef4444' : '#e5e7eb'}} 
+                        onFocus={(e) => {
+                          e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
+                          e.target.style.backgroundColor = '#f8fdf9';
+                        }}
+                        style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: (touched.mvFileNo && !formData.mvFileNo) ? '#ef4444' : inputBaseStyle.borderColor}}
                       />
-                      {touched.mvFileNo && !formData.mvFileNo && (
-                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
-                      )}
                     </div>
                     <div>
                       <label htmlFor="plate-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Plate No. <span style={{color: '#ef4444'}}>*</span></label>
@@ -1051,12 +1017,12 @@ function Menu() {
                         placeholder="Plate"
                         aria-label="License plate number - required"
                         aria-required="true"
-                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
-                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s', textTransform: 'uppercase', borderColor: touched.plateNo && !formData.plateNo ? '#ef4444' : '#e5e7eb'}} 
+                        onFocus={(e) => {
+                          e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
+                          e.target.style.backgroundColor = '#f8fdf9';
+                        }}
+                        style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: (touched.plateNo && !formData.plateNo) ? '#ef4444' : inputBaseStyle.borderColor}}
                       />
-                      {touched.plateNo && !formData.plateNo && (
-                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
-                      )}
                     </div>
                     <div>
                       <label htmlFor="chassis-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Chassis No. <span style={{color: '#ef4444'}}>*</span></label>
@@ -1070,12 +1036,12 @@ function Menu() {
                         placeholder="Chassis"
                         aria-label="Chassis number - required"
                         aria-required="true"
-                        onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
-                        style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s', textTransform: 'uppercase', borderColor: touched.serialChassisNo && !formData.serialChassisNo ? '#ef4444' : '#e5e7eb'}} 
+                        onFocus={(e) => {
+                          e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
+                          e.target.style.backgroundColor = '#f8fdf9';
+                        }}
+                        style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: (touched.serialChassisNo && !formData.serialChassisNo) ? '#ef4444' : inputBaseStyle.borderColor}}
                       />
-                      {touched.serialChassisNo && !formData.serialChassisNo && (
-                        <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
-                      )}
                     </div>
                   </div>
 
@@ -1091,12 +1057,12 @@ function Menu() {
                       placeholder="Enter motor number"
                       aria-label="Motor number - required"
                       aria-required="true"
-                      onFocus={(e) => Object.assign(e.target.style, inputFocusStyle)}
-                      style={{width: '100%', padding: '10px 12px', border: '1px solid #e5e7eb', borderRadius: '8px', fontSize: '13px', outline: 'none', transition: 'all 0.2s', textTransform: 'uppercase', borderColor: touched.motorNo && !formData.motorNo ? '#ef4444' : '#e5e7eb'}} 
+                      onFocus={(e) => {
+                        e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
+                        e.target.style.backgroundColor = '#f8fdf9';
+                      }}
+                      style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: (touched.motorNo && !formData.motorNo) ? '#ef4444' : inputBaseStyle.borderColor}} 
                     />
-                    {touched.motorNo && !formData.motorNo && (
-                      <span style={{fontSize: '11px', color: '#ef4444', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: '500'}}>⚠ This field is required</span>
-                    )}
                   </div>
                 </div>
               </div>
@@ -1364,7 +1330,7 @@ function Menu() {
                   boxShadow: '0 4px 12px rgba(45, 80, 22, 0.12)',
                   textAlign: 'center'
                 }} role="region" aria-label="Total premium amount summary">
-                  <p style={{fontSize: '12px', color: '#ffffff', margin: '0 0 8px 0', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.5px'}}>Total Premium</p>
+                  <p style={{fontSize: '15px', color: '#ffffff', margin: '0 0 8px 0', textTransform: 'uppercase', fontWeight: '700', letterSpacing: '0.5px'}}>Grand Total</p>
                   <p style={{fontSize: '32px', fontWeight: '800', color: '#ffffff', margin: 0}} aria-live="polite">₱{rates.total.toFixed(2)}</p>
                 </div>
               </div>
@@ -1881,14 +1847,14 @@ function Menu() {
         boxShadow: '0 4px 12px rgba(5, 150, 105, 0.3)'
       }}>
         <p style={{
-          fontSize: '11px', 
+          fontSize: '15px', 
           color: '#d1fae5', 
           margin: '0 0 4px 0', 
           fontWeight: '700', 
           textTransform: 'uppercase', 
           letterSpacing: '1px'
         }}>
-          Total Premium
+          Grand Total
         </p>
         <p style={{fontSize: '30px', fontWeight: '900', color: '#ffffff', margin: 0, letterSpacing: '-0.5px'}}>
           ₱{rates.total.toFixed(2)}
