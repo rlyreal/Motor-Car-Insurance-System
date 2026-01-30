@@ -5,6 +5,8 @@ import { FiEye, FiEdit2, FiTrash2, FiDownload, FiUser, FiFileText, FiHash, FiCre
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import Toast from "../../common/toast";
+import ViewModal from "../button/view";
+import EditModal from "../button/edit";
 
 const Records = () => {
   const [searchInput, setSearchInput] = useState("");
@@ -14,7 +16,14 @@ const Records = () => {
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [toast, setToast] = useState(null);
   const navigate = useNavigate();
-
+  
+  // Modal states
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [editData, setEditData] = useState(null);
+  const [deleteConfirmUser, setDeleteConfirmUser] = useState(null);
+  
   const handleAddClick = () => {
     navigate('/menu');
   };
@@ -64,34 +73,247 @@ const Records = () => {
     if (results.length === 0) {
       setToast({ message: '🔍 No records found matching your search criteria', type: 'error' });
     } else if (results.length === 1) {
-      setToast({ message: '✓ Found 1 matching record', type: 'success' });
+      setToast({ message: ' Found 1 matching record', type: 'success' });
     } else {
-      setToast({ message: `✓ Found ${results.length} matching records`, type: 'success' });
+      setToast({ message: ` Found ${results.length} matching records`, type: 'success' });
     }
-  };
-
-  // Clear search function
-  const handleClearSearch = () => {
-    setSearchInput("");
-    setDateFrom("");
-    setDateTo("");
-    setFilteredUsers([]);
-    setIsSearchActive(false);
-    setCurrentPage(1);
-    setToast({ message: 'Search filters cleared successfully', type: 'info' });
   };
 
   // Initialize users from localStorage submitted records
   const [users, setUsers] = useState(() => {
     const submittedRecords = JSON.parse(localStorage.getItem('submittedRecords')) || [];
     const sampleUsers = [
-      { id: 1, name: "Mark Dave Catubig", pn: "10001", coc: "COC001", or: "OR001", plate: "ABC-001", dateCreated: "2025-01-15" },
-      { id: 2, name: "Vince Bryant Cabunilas", pn: "10002", coc: "COC002", or: "OR002", plate: "ABC-002", dateCreated: "2025-01-18" },
-      { id: 3, name: "Real John Palacio", pn: "10003", coc: "COC003", or: "OR003", plate: "ABC-003", dateCreated: "2025-01-20" },
-      { id: 4, name: "Jeff Monreal", pn: "10004", coc: "COC004", or: "OR004", plate: "ABC-004", dateCreated: "2025-01-22" },
-      { id: 5, name: "Rovic Steve Real", pn: "10005", coc: "COC005", or: "OR005", plate: "ABC-005", dateCreated: "2025-01-25" },
-      { id: 6, name: "Alexus Sundae Sagaral", pn: "10006", coc: "COC006", or: "OR006", plate: "ABC-006", dateCreated: "2025-01-26" },
-      { id: 7, name: "Julius Micheal Escoton", pn: "10007", coc: "COC007", or: "OR007", plate: "ABC-007", dateCreated: "2025-01-28" }
+      { 
+        id: 1, 
+        name: "Mark Dave Catubig",
+        assuredName: "Mark Dave Catubig",
+        address: "123 Main St, Manila",
+        policyNumber: "POL-2025-001",
+        pn: "10001", 
+        cocNumber: "COC001",
+        coc: "COC001", 
+        orNumber: "OR001",
+        or: "OR001", 
+        model: "2025 Camry",
+        fromDate: "2025-01-01",
+        toDate: "2026-01-01",
+        issued: "2025-01-01",
+        received: "2025-01-02",
+        make: "Toyota",
+        bodyType: "Sedan",
+        color: "Silver",
+        plateNo: "ABC-001",
+        plate: "ABC-001",
+        chassisNo: "CH123456789",
+        motorNo: "MOT987654321",
+        mvFileNo: "MV2025001",
+        premium: "₱5,000",
+        otherCharges: "₱500",
+        docStamps: "₱625",
+        eVat: "₱600",
+        localGovtTax: "₱25",
+        authFee: "₱50.40",
+        grandTotal: "₱6,800.40",
+        dateCreated: "2025-01-15"
+      },
+      { 
+        id: 2, 
+        name: "Vince Bryant Cabunilas",
+        assuredName: "Vince Bryant Cabunilas",
+        address: "456 Oak Ave, Quezon City",
+        policyNumber: "POL-2025-002",
+        pn: "10002", 
+        cocNumber: "COC002",
+        coc: "COC002", 
+        orNumber: "OR002",
+        or: "OR002", 
+        model: "2025 CR-V",
+        fromDate: "2025-01-10",
+        toDate: "2026-01-10",
+        issued: "2025-01-10",
+        received: "2025-01-11",
+        make: "Honda",
+        bodyType: "SUV",
+        color: "Black",
+        plateNo: "ABC-002",
+        plate: "ABC-002",
+        chassisNo: "CH223456789",
+        motorNo: "MOT287654321",
+        mvFileNo: "MV2025002",
+        premium: "₱3,500",
+        otherCharges: "₱300",
+        docStamps: "₱437.50",
+        eVat: "₱420",
+        localGovtTax: "₱17.50",
+        authFee: "₱50.40",
+        grandTotal: "₱4,825.40",
+        dateCreated: "2025-01-18"
+      },
+      { 
+        id: 3, 
+        name: "Real John Palacio",
+        assuredName: "Real John Palacio",
+        address: "789 Pine Rd, Makati",
+        policyNumber: "POL-2025-003",
+        pn: "10003", 
+        cocNumber: "COC003",
+        coc: "COC003", 
+        orNumber: "OR003",
+        or: "OR003", 
+        model: "2025 F-150",
+        fromDate: "2025-01-05",
+        toDate: "2026-01-05",
+        issued: "2025-01-05",
+        received: "2025-01-06",
+        make: "Ford",
+        bodyType: "Truck",
+        color: "Red",
+        plateNo: "ABC-003",
+        plate: "ABC-003",
+        chassisNo: "CH323456789",
+        motorNo: "MOT387654321",
+        mvFileNo: "MV2025003",
+        premium: "₱6,000",
+        otherCharges: "₱600",
+        docStamps: "₱750",
+        eVat: "₱720",
+        localGovtTax: "₱30",
+        authFee: "₱50.40",
+        grandTotal: "₱8,150.40",
+        dateCreated: "2025-01-20"
+      },
+      { 
+        id: 4, 
+        name: "Jeff Monreal",
+        assuredName: "Jeff Monreal",
+        address: "321 Elm St, Pasay",
+        policyNumber: "POL-2025-004",
+        pn: "10004", 
+        cocNumber: "COC004",
+        coc: "COC004", 
+        orNumber: "OR004",
+        or: "OR004", 
+        model: "2025 Elantra",
+        fromDate: "2025-01-12",
+        toDate: "2026-01-12",
+        issued: "2025-01-12",
+        received: "2025-01-13",
+        make: "Hyundai",
+        bodyType: "Sedan",
+        color: "White",
+        plateNo: "ABC-004",
+        plate: "ABC-004",
+        chassisNo: "CH423456789",
+        motorNo: "MOT487654321",
+        mvFileNo: "MV2025004",
+        premium: "₱4,800",
+        otherCharges: "₱400",
+        docStamps: "₱600",
+        eVat: "₱576",
+        localGovtTax: "₱24",
+        authFee: "₱50.40",
+        grandTotal: "₱6,450.40",
+        dateCreated: "2025-01-22"
+      },
+      { 
+        id: 5, 
+        name: "Rovic Steve Real",
+        assuredName: "Rovic Steve Real",
+        address: "654 Birch Ln, Las Piñas",
+        policyNumber: "POL-2025-005",
+        pn: "10005", 
+        cocNumber: "COC005",
+        coc: "COC005", 
+        orNumber: "OR005",
+        or: "OR005", 
+        model: "2025 YZF-R15",
+        fromDate: "2025-01-20",
+        toDate: "2026-01-20",
+        issued: "2025-01-20",
+        received: "2025-01-21",
+        make: "Yamaha",
+        bodyType: "Motorcycle",
+        color: "Blue",
+        plateNo: "ABC-005",
+        plate: "ABC-005",
+        chassisNo: "CH523456789",
+        motorNo: "MOT587654321",
+        mvFileNo: "MV2025005",
+        premium: "₱2,000",
+        otherCharges: "₱200",
+        docStamps: "₱250",
+        eVat: "₱240",
+        localGovtTax: "₱10",
+        authFee: "₱50.40",
+        grandTotal: "₱2,750.40",
+        dateCreated: "2025-01-25"
+      },
+      { 
+        id: 6, 
+        name: "Alexus Sundae Sagaral",
+        assuredName: "Alexus Sundae Sagaral",
+        address: "987 Spruce Way, Cebu",
+        policyNumber: "POL-2025-006",
+        pn: "10006", 
+        cocNumber: "COC006",
+        coc: "COC006", 
+        orNumber: "OR006",
+        or: "OR006", 
+        model: "2025 CX-5",
+        fromDate: "2025-01-08",
+        toDate: "2026-01-08",
+        issued: "2025-01-08",
+        received: "2025-01-09",
+        make: "Mazda",
+        bodyType: "Sedan",
+        color: "Gray",
+        plateNo: "ABC-006",
+        plate: "ABC-006",
+        chassisNo: "CH623456789",
+        motorNo: "MOT687654321",
+        mvFileNo: "MV2025006",
+        premium: "₱6,500",
+        otherCharges: "₱700",
+        docStamps: "₱812.50",
+        eVat: "₱780",
+        localGovtTax: "₱32.50",
+        authFee: "₱50.40",
+        grandTotal: "₱8,875.40",
+        dateCreated: "2025-01-26"
+      },
+      { 
+        id: 7, 
+        name: "Julius Micheal Escoton",
+        assuredName: "Julius Micheal Escoton",
+        address: "159 Maple Dr, Davao",
+        policyNumber: "POL-2025-007",
+        pn: "10007", 
+        cocNumber: "COC007",
+        coc: "COC007", 
+        orNumber: "OR007",
+        or: "OR007", 
+        model: "2025 X-Trail",
+        fromDate: "2025-01-18",
+        toDate: "2026-01-18",
+        issued: "2025-01-18",
+        received: "2025-01-19",
+        make: "Nissan",
+        bodyType: "SUV",
+        color: "Gold",
+        plateNo: "ABC-007",
+        plate: "ABC-007",
+        chassisNo: "CH723456789",
+        motorNo: "MOT787654321",
+        mvFileNo: "MV2025007",
+        premium: "₱4,100",
+        otherCharges: "₱350",
+        docStamps: "₱512.50",
+        eVat: "₱492",
+        localGovtTax: "₱20.50",
+        authFee: "₱50.40",
+        grandTotal: "₱5,525.40",
+        dateCreated: "2025-01-28"
+      }
     ];
     return [...sampleUsers, ...submittedRecords];
   });
@@ -121,12 +343,6 @@ const Records = () => {
   const handleNext = () => goToPage(currentPage + 1);
 
   // --- modal / edit state & handlers ---
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalType, setModalType] = useState(null); // 'view' | 'edit' | 'delete'
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [editData, setEditData] = useState(null);
-  const [deleteConfirmUser, setDeleteConfirmUser] = useState(null);
-
   const openView = (user) => {
     setSelectedUser(user);
     setModalType("view");
@@ -134,8 +350,12 @@ const Records = () => {
   };
 
   const openEdit = (user) => {
+    const combinedModel = user.year ? `${user.year} ${user.model}` : user.model || "";
+    const initialEdit = { ...user, model: combinedModel };
+    // ensure year is removed in editData
+    if ('year' in initialEdit) delete initialEdit.year;
     setSelectedUser(user);
-    setEditData({ ...user });
+    setEditData(initialEdit);
     setModalType("edit");
     setModalOpen(true);
   };
@@ -213,9 +433,9 @@ const Records = () => {
   const premiumModal = {
     backgroundColor: "#ffffff",
     borderRadius: "20px",
-    width: "90%",
-    maxWidth: "650px",
-    maxHeight: "90vh",
+    width: "95%",
+    maxWidth: "1000px",
+    maxHeight: "95vh",
     overflow: "hidden",
     boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.05)",
     animation: "slideUpScale 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
@@ -224,7 +444,7 @@ const Records = () => {
   };
 
   const premiumModalHeader = {
-    padding: "32px 36px",
+    padding: "40px 48px",
     borderBottom: "1px solid rgba(229, 231, 235, 0.8)",
     background: "linear-gradient(135deg, #1e6b47 0%, #267d57 50%, #2f9268 100%)",
     color: "#ffffff",
@@ -248,14 +468,14 @@ const Records = () => {
   };
 
   const premiumModalBody = {
-    padding: "36px",
+    padding: "48px",
     overflowY: "auto",
     flex: 1,
     backgroundColor: "#fafafa"
   };
 
   const premiumModalFooter = {
-    padding: "24px 36px",
+    padding: "32px 48px",
     borderTop: "1px solid #e5e7eb",
     display: "flex",
     justifyContent: "flex-end",
@@ -533,7 +753,6 @@ const Records = () => {
           }
         }
 
-        /* Header decoration */
         .modal-header-decoration {
           position: absolute;
           top: 0;
@@ -544,7 +763,6 @@ const Records = () => {
           pointer-events: none;
         }
 
-        /* Override CSS for ADD button to match color */
         .add-btn {
           background-color: #1e6b47 !important;
           border: none !important;
@@ -556,7 +774,6 @@ const Records = () => {
           box-shadow: 0 4px 12px rgba(30, 107, 71, 0.3) !important;
         }
 
-        /* Override CSS for pagination buttons */
         .page-size-btn.active {
           background-color: #1e6b47 !important;
           color: white !important;
@@ -578,7 +795,6 @@ const Records = () => {
           cursor: not-allowed;
         }
 
-        /* Dropdown styles */
         .page-dropdown {
           padding: 8px 12px;
           padding-right: 32px;
@@ -604,11 +820,6 @@ const Records = () => {
         .page-dropdown:focus {
           outline: none;
           box-shadow: 0 0 0 3px rgba(30, 107, 71, 0.2);
-        }
-
-        .dropdown-wrapper {
-          position: relative;
-          display: inline-block;
         }
       `}</style>
 
@@ -694,7 +905,15 @@ const Records = () => {
             <input 
               type="date" 
               value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
+              onChange={(e) => {
+                setDateFrom(e.target.value);
+                // Auto-reset when all filters are cleared
+                if (e.target.value === "" && dateTo === "" && searchInput.trim() === "") {
+                  setFilteredUsers([]);
+                  setIsSearchActive(false);
+                  setCurrentPage(1);
+                }
+              }}
             />
           </div>
 
@@ -703,7 +922,15 @@ const Records = () => {
             <input 
               type="date" 
               value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
+              onChange={(e) => {
+                setDateTo(e.target.value);
+                // Auto-reset when all filters are cleared
+                if (e.target.value === "" && dateFrom === "" && searchInput.trim() === "") {
+                  setFilteredUsers([]);
+                  setIsSearchActive(false);
+                  setCurrentPage(1);
+                }
+              }}
             />
           </div>
 
@@ -713,7 +940,15 @@ const Records = () => {
               <input 
                 type="text" 
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
+                onChange={(e) => {
+                  setSearchInput(e.target.value);
+                  // Auto-reset when input is cleared
+                  if (e.target.value.trim() === "" && dateFrom === "" && dateTo === "") {
+                    setFilteredUsers([]);
+                    setIsSearchActive(false);
+                    setCurrentPage(1);
+                  }
+                }}
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
                     handleSearch();
@@ -733,43 +968,6 @@ const Records = () => {
               >
                 🔍 Search
               </button>
-              {isSearchActive && (
-                <button 
-                  className="btn clear-btn" 
-                  onClick={handleClearSearch}
-                  style={{
-                    ...noBorderStyle,
-                    backgroundColor: "#ef4444",
-                    color: "white",
-                    padding: "10px 16px",
-                    borderRadius: "10px",
-                    cursor: "pointer",
-                    fontSize: "14px",
-                    fontWeight: "700",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    transition: "all 0.3s ease",
-                    boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)",
-                    whiteSpace: "nowrap",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                    border: "2px solid rgba(255, 255, 255, 0.3)"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = "#dc2626";
-                    e.currentTarget.style.transform = "translateY(-3px)";
-                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(239, 68, 68, 0.4)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = "#ef4444";
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(239, 68, 68, 0.3)";
-                  }}
-                >
-                  ✕ Clear
-                </button>
-              )}
             </div>
           </div>
         </div>
@@ -938,294 +1136,144 @@ const Records = () => {
       </div>
 
       {/* Premium Modal: view / edit / delete */}
-      {modalOpen && (
+      {modalOpen && modalType === "view" && (
+        <ViewModal 
+          selectedUser={selectedUser}
+          onClose={closeModal}
+          premiumModalBackdrop={premiumModalBackdrop}
+          premiumModal={premiumModal}
+          premiumModalHeader={premiumModalHeader}
+          premiumModalTitle={premiumModalTitle}
+          premiumModalBody={premiumModalBody}
+          premiumModalFooter={premiumModalFooter}
+          secondaryButton={secondaryButton}
+          infoBadge={infoBadge}
+          fieldGroup={fieldGroup}
+          fieldLabel={fieldLabel}
+          fieldValue={fieldValue}
+          divider={divider}
+        />
+      )}
+
+      {modalOpen && modalType === "edit" && (
+        <EditModal 
+          editData={editData}
+          onEditChange={setEditData}
+          onSave={handleSaveEdit}
+          onCancel={closeModal}
+          premiumModalBackdrop={premiumModalBackdrop}
+          premiumModal={premiumModal}
+          premiumModalHeader={premiumModalHeader}
+          premiumModalTitle={premiumModalTitle}
+          premiumModalBody={premiumModalBody}
+          premiumModalFooter={premiumModalFooter}
+          primaryButton={primaryButton}
+          secondaryButton={secondaryButton}
+          infoBadge={infoBadge}
+          fieldGroup={fieldGroup}
+          fieldLabel={fieldLabel}
+          premiumInput={premiumInput}
+          divider={divider}
+        />
+      )}
+
+      {modalOpen && modalType === "delete" && deleteConfirmUser && (
         <div style={premiumModalBackdrop}>
           <div style={premiumModal} onClick={(e) => e.stopPropagation()}>
             {/* Modal Header */}
             <div style={premiumModalHeader}>
               <div className="modal-header-decoration"></div>
               <h3 style={premiumModalTitle}>
-                {modalType === "view" && (
-                  <>
-                    <FiEye size={30} />
-                    View Record Details
-                  </>
-                )}
-                {modalType === "edit" && (
-                  <>
-                    <FiEdit2 size={30} />
-                    Edit Record
-                  </>
-                )}
-                {modalType === "delete" && (
-                  <>
-                    <FiTrash2 size={30} />
-                    Delete Record
-                  </>
-                )}
+                <FiTrash2 size={30} />
+                Delete Record
               </h3>
             </div>
 
             {/* Modal Body */}
             <div style={premiumModalBody}>
-              {modalType === "view" && selectedUser && (
-                <div>
-                  <div style={infoBadge}>
-                    <FiAlertCircle size={14} />
-                    Record Information
-                  </div>
-
-                  <div style={fieldGroup}>
-                    <label style={fieldLabel}>
-                      <FiUser size={14} />
-                      Full Name
-                    </label>
-                    <div style={fieldValue} className="field-value-hover">{selectedUser.name}</div>
-                  </div>
-
-                  <div style={divider}></div>
-
-                  <div style={fieldGroup}>
-                    <label style={fieldLabel}>
-                      <FiHash size={14} />
-                      Policy Number
-                    </label>
-                    <div style={fieldValue} className="field-value-hover">{selectedUser.pn}</div>
-                  </div>
-
-                  <div style={fieldGroup}>
-                    <label style={fieldLabel}>
-                      <FiFileText size={14} />
-                      COC Number
-                    </label>
-                    <div style={fieldValue} className="field-value-hover">{selectedUser.coc}</div>
-                  </div>
-
-                  <div style={divider}></div>
-
-                  <div style={fieldGroup}>
-                    <label style={fieldLabel}>
-                      <FiFileText size={14} />
-                      OR Number
-                    </label>
-                    <div style={fieldValue} className="field-value-hover">{selectedUser.or}</div>
-                  </div>
-
-                  <div style={{ ...fieldGroup, marginBottom: 0 }}>
-                    <label style={fieldLabel}>
-                      <FiCreditCard size={14} />
-                      Plate Number
-                    </label>
-                    <div style={fieldValue} className="field-value-hover">{selectedUser.plate}</div>
-                  </div>
+              <div style={{ textAlign: "center", padding: "30px 20px" }}>
+                <div style={{
+                  ...iconBadge,
+                  backgroundColor: "#fee2e2",
+                  color: "#dc2626",
+                  margin: "0 auto 24px"
+                }}
+                className="icon-badge-pulse">
+                  <FiTrash2 size={28} />
                 </div>
-              )}
-
-              {modalType === "edit" && editData && (
-                <div>
-                  <div style={infoBadge}>
-                    <FiEdit2 size={14} />
-                    Editing Mode
-                  </div>
-
-                  <div style={fieldGroup}>
-                    <label style={fieldLabel}>
-                      <FiUser size={14} />
-                      Full Name
-                    </label>
-                    <input 
-                      style={premiumInput}
-                      className="premium-input"
-                      value={editData.name} 
-                      onChange={(e) => setEditData({ ...editData, name: e.target.value })} 
-                      placeholder="Enter full name"
-                    />
-                  </div>
-
-                  <div style={divider}></div>
-
-                  <div style={fieldGroup}>
-                    <label style={fieldLabel}>
-                      <FiHash size={14} />
-                      Policy Number
-                    </label>
-                    <input 
-                      style={premiumInput}
-                      className="premium-input"
-                      value={editData.pn} 
-                      onChange={(e) => setEditData({ ...editData, pn: e.target.value })} 
-                      placeholder="Enter policy number"
-                    />
-                  </div>
-
-                  <div style={fieldGroup}>
-                    <label style={fieldLabel}>
-                      <FiFileText size={14} />
-                      COC Number
-                    </label>
-                    <input 
-                      style={premiumInput}
-                      className="premium-input"
-                      value={editData.coc} 
-                      onChange={(e) => setEditData({ ...editData, coc: e.target.value })} 
-                      placeholder="Enter COC number"
-                    />
-                  </div>
-
-                  <div style={divider}></div>
-
-                  <div style={fieldGroup}>
-                    <label style={fieldLabel}>
-                      <FiFileText size={14} />
-                      OR Number
-                    </label>
-                    <input 
-                      style={premiumInput}
-                      className="premium-input"
-                      value={editData.or} 
-                      onChange={(e) => setEditData({ ...editData, or: e.target.value })} 
-                      placeholder="Enter OR number"
-                    />
-                  </div>
-
-                  <div style={{ ...fieldGroup, marginBottom: 0 }}>
-                    <label style={fieldLabel}>
-                      <FiCreditCard size={14} />
-                      Plate Number
-                    </label>
-                    <input 
-                      style={premiumInput}
-                      className="premium-input"
-                      value={editData.plate} 
-                      onChange={(e) => setEditData({ ...editData, plate: e.target.value })} 
-                      placeholder="Enter plate number"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {modalType === "delete" && deleteConfirmUser && (
-                <div style={{ 
-                  textAlign: "center", 
-                  padding: "30px 20px" 
+                <h4 style={{ 
+                  fontSize: "22px", 
+                  fontWeight: "700", 
+                  color: "#111827",
+                  marginBottom: "16px" 
                 }}>
-                  <div style={{
-                    ...iconBadge,
-                    backgroundColor: "#fee2e2",
-                    color: "#dc2626",
-                    margin: "0 auto 24px"
-                  }}
-                  className="icon-badge-pulse">
-                    <FiTrash2 size={28} />
-                  </div>
-                  <h4 style={{ 
-                    fontSize: "22px", 
-                    fontWeight: "700", 
+                  Confirm Deletion
+                </h4>
+                <p style={{ 
+                  fontSize: "1x",
+                  color: "#6b7280", 
+                  marginBottom: "12px",
+                  lineHeight: "1.7"
+                }}>
+                  You are about to permanently delete the record for
+                </p>
+                <div style={{
+                  padding: "16px 24px",
+                  backgroundColor: "#f9fafb",
+                  borderRadius: "12px",
+                  margin: "16px 0",
+                  border: "2px solid #e5e7eb"
+                }}>
+                  <p style={{
+                    fontSize: "18px",
+                    fontWeight: "700",
                     color: "#111827",
-                    marginBottom: "16px" 
+                    margin: 0
                   }}>
-                    Confirm Deletion
-                  </h4>
-                  <p style={{ 
-                    fontSize: "1x",
-                    color: "#6b7280", 
-                    marginBottom: "12px",
-                    lineHeight: "1.7"
-                  }}>
-                    You are about to permanently delete the record for
+                    {deleteConfirmUser.name}
                   </p>
-                  <div style={{
-                    padding: "16px 24px",
-                    backgroundColor: "#f9fafb",
-                    borderRadius: "12px",
-                    margin: "16px 0",
-                    border: "2px solid #e5e7eb"
-                  }}>
-                    <p style={{
-                      fontSize: "18px",
-                      fontWeight: "700",
-                      color: "#111827",
-                      margin: 0
-                    }}>
-                      {deleteConfirmUser.name}
-                    </p>
-                  </div>
-                  <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "8px",
-                    padding: "12px 20px",
-                    backgroundColor: "#fef3c7",
-                    border: "1px solid #fbbf24",
-                    borderRadius: "10px",
-                    marginTop: "20px"
-                  }}>
-                    <FiAlertCircle size={18} color="#92400e" />
-                    <p style={{ 
-                      fontSize: "13px",
-                      color: "#92400e",
-                      margin: 0,
-                      fontWeight: "600"
-                    }}>
-                      This action cannot be undone
-                    </p>
-                  </div>
                 </div>
-              )}
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  padding: "12px 20px",
+                  backgroundColor: "#fef3c7",
+                  border: "1px solid #fbbf24",
+                  borderRadius: "10px",
+                  marginTop: "20px"
+                }}>
+                  <FiAlertCircle size={18} color="#92400e" />
+                  <p style={{ 
+                    fontSize: "13px",
+                    color: "#92400e",
+                    margin: 0,
+                    fontWeight: "600"
+                  }}>
+                    This action cannot be undone
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* Modal Footer */}
             <div style={premiumModalFooter}>
-              {modalType === "view" && (
-                <button 
-                  style={secondaryButton}
-                  className="premium-button secondary-button"
-                  onClick={closeModal}
-                >
-                  Close
-                </button>
-              )}
-
-              {modalType === "edit" && (
-                <>
-                  <button 
-                    style={secondaryButton}
-                    className="premium-button secondary-button"
-                    onClick={closeModal}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    style={primaryButton}
-                    className="premium-button primary-button"
-                    onClick={handleSaveEdit}
-                  >
-                    <FiEdit2 size={16} />
-                    Save Changes
-                  </button>
-                </>
-              )}
-
-              {modalType === "delete" && (
-                <>
-                  <button 
-                    style={secondaryButton}
-                    className="premium-button secondary-button"
-                    onClick={closeModal}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    style={deleteButton}
-                    className="premium-button delete-button"
-                    onClick={confirmDelete}
-                  >
-                    <FiTrash2 size={16} />
-                    Delete Permanently
-                  </button>
-                </>
-              )}
+              <button 
+                style={secondaryButton}
+                className="premium-button secondary-button"
+                onClick={closeModal}
+              >
+                Cancel
+              </button>
+              <button 
+                style={deleteButton}
+                className="premium-button delete-button"
+                onClick={confirmDelete}
+              >
+                <FiTrash2 size={16} />
+                Delete Permanently
+              </button>
             </div>
           </div>
         </div>
