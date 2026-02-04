@@ -152,13 +152,9 @@ const Records = () => {
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Use filtered users if search is active, otherwise use all users
   const displayUsers = isSearchActive ? filteredUsers : users;
-
-  // total pages is number of groups of 5 (1 => up to 5 items, 2 => up to 10, etc.)
   const totalPages = Math.max(1, Math.ceil(displayUsers.length / itemsPerPage));
 
-  // clamp currentPage when users change
   useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
@@ -172,7 +168,6 @@ const Records = () => {
   const handlePrev = () => goToPage(currentPage - 1);
   const handleNext = () => goToPage(currentPage + 1);
 
-  // --- modal / edit state & handlers ---
   const openView = (user) => {
     setSelectedUser(user);
     setModalType("view");
@@ -598,94 +593,435 @@ const openEdit = (user) => {
     marginBottom: "20px"
   };
 
-  // Export to Excel
+  // Export to Excel with Premium Formatting
   const exportToExcel = () => {
     const tableData = users.map(user => ({
-      "Name": user.name,
+      "Assured Name": user.name,
+      "Address": user.address,
       "Policy Number": user.pn,
       "COC Number": user.coc,
       "OR Number": user.or,
-      "Plate Number": user.plate
+      "Model": user.model,
+      "Make": user.make,
+      "Body Type": user.bodyType,
+      "Color": user.color,
+      "Plate Number": user.plate,
+      "MV File No": user.mvFileNo,
+      "Chassis No": user.chassisNo,
+      "Motor No": user.motorNo,
+      "Premium": user.premium,
+      "Other Charges": user.otherCharges,
+      "Doc Stamps": user.docStamps,
+      "E-VAT": user.eVat,
+      "Local Govt Tax": user.localGovtTax,
+      "Auth Fee": user.authFee,
+      "Grand Total": user.grandTotal
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(tableData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Records");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Insurance Records");
     
     worksheet["!cols"] = [
-      { wch: 20 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 15 },
-      { wch: 15 }
+      { wch: 25 }, // Assured Name
+      { wch: 30 }, // Address
+      { wch: 15 }, // Policy Number
+      { wch: 12 }, // COC Number
+      { wch: 12 }, // OR Number
+      { wch: 18 }, // Model
+      { wch: 12 }, // Make
+      { wch: 12 }, // Body Type
+      { wch: 10 }, // Color
+      { wch: 15 }, // Plate Number
+      { wch: 15 }, // MV File No
+      { wch: 18 }, // Chassis No
+      { wch: 18 }, // Motor No
+      { wch: 15 }, // Premium
+      { wch: 15 }, // Other Charges
+      { wch: 15 }, // Doc Stamps
+      { wch: 12 }, // E-VAT
+      { wch: 15 }, // Local Govt Tax
+      { wch: 12 }, // Auth Fee
+      { wch: 15 }  // Grand Total
     ];
 
-    XLSX.writeFile(workbook, `Records_${new Date().toISOString().split('T')[0]}.xlsx`);
-    setToast({ message: 'Excel file exported successfully!', type: 'success' });
+    // Get the range of the worksheet
+    const range = XLSX.utils.decode_range(worksheet['!ref']);
+    
+    // Style the header row (row 0) with green background
+    for (let col = range.s.c; col <= range.e.c; col++) {
+      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
+      if (!worksheet[cellAddress]) continue;
+      
+      worksheet[cellAddress].s = {
+        fill: {
+          fgColor: { rgb: "1E6B47" } // Green background matching your theme
+        },
+        font: {
+          bold: true,
+          color: { rgb: "FFFFFF" }, // White text
+          sz: 12,
+          name: "Calibri"
+        },
+        alignment: {
+          horizontal: "center",
+          vertical: "center",
+          wrapText: true
+        },
+        border: {
+          top: { style: "thin", color: { rgb: "000000" } },
+          bottom: { style: "thin", color: { rgb: "000000" } },
+          left: { style: "thin", color: { rgb: "000000" } },
+          right: { style: "thin", color: { rgb: "000000" } }
+        }
+      };
+    }
+
+    // Style data rows with alternating colors
+    for (let row = range.s.r + 1; row <= range.e.r; row++) {
+      const isEvenRow = (row - 1) % 2 === 0;
+      
+      for (let col = range.s.c; col <= range.e.c; col++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+        if (!worksheet[cellAddress]) continue;
+        
+        worksheet[cellAddress].s = {
+          fill: {
+            fgColor: { rgb: isEvenRow ? "F3F4F6" : "FFFFFF" } // Alternating light gray and white
+          },
+          font: {
+            sz: 11,
+            color: { rgb: "000000" },
+            name: "Calibri"
+          },
+          alignment: {
+            horizontal: col === 0 || col === 1 ? "left" : "center", // Left align name and address
+            vertical: "center",
+            wrapText: true
+          },
+          border: {
+            top: { style: "thin", color: { rgb: "E5E7EB" } },
+            bottom: { style: "thin", color: { rgb: "E5E7EB" } },
+            left: { style: "thin", color: { rgb: "E5E7EB" } },
+            right: { style: "thin", color: { rgb: "E5E7EB" } }
+          }
+        };
+
+        // Bold the Assured Name (col 0) and Grand Total (col 19) columns
+        if (col === 0 || col === 19) {
+          worksheet[cellAddress].s.font.bold = true;
+          worksheet[cellAddress].s.font.sz = 11;
+        }
+
+        // Highlight Grand Total column with light green background
+        if (col === 19) {
+          worksheet[cellAddress].s.fill.fgColor = { rgb: "D1FAE5" };
+        }
+
+        // Highlight Premium column with light yellow background
+        if (col === 13) {
+          worksheet[cellAddress].s.fill.fgColor = { rgb: "FEF3C7" };
+        }
+      }
+    }
+
+    // Set row heights for better appearance
+    worksheet["!rows"] = [];
+    worksheet["!rows"][0] = { hpt: 30 }; // Header row height
+    for (let i = 1; i <= range.e.r; i++) {
+      worksheet["!rows"][i] = { hpt: 22 }; // Data row height
+    }
+
+    // Add autofilter to header row
+    worksheet["!autofilter"] = { ref: `A1:T1` };
+
+    XLSX.writeFile(workbook, `Alpha_Insurance_Records_${new Date().toISOString().split('T')[0]}.xlsx`);
+    setToast({ message: '📊 Excel file with formatting exported successfully!', type: 'success' });
   };
 
-  // Export to PDF
-  const exportToPDF = () => {
-    const doc = new jsPDF();
+  // COMPREHENSIVE PDF EXPORT WITH ALL FORM FIELDS INCLUDING PREMIUM AND CHARGES
+  const exportToPDF = async () => {
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-    let yPosition = 20;
+    const margin = 15;
+    let yPosition = margin;
 
-    doc.setFontSize(16);
-    doc.setFont(undefined, "bold");
-    doc.text("Records Report", pageWidth / 2, yPosition, { align: "center" });
-    yPosition += 15;
+    const colors = {
+      primary: [30, 107, 71],
+      primaryDark: [22, 86, 56],
+      secondary: [245, 245, 245],
+      text: [33, 33, 33],
+      textLight: [100, 100, 100],
+      white: [255, 255, 255]
+    };
 
-    doc.setFontSize(10);
-    doc.setFont(undefined, "normal");
-    doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth / 2, yPosition, { align: "center" });
-    yPosition += 12;
+    const drawPageHeader = () => {
+      yPosition = 15;
 
-    doc.setFontSize(11);
-    doc.setFont(undefined, "bold");
-    doc.setTextColor(240, 240, 240);
-    doc.setFillColor(30, 107, 71);
-    
-    const colWidths = [35, 30, 30, 30, 35];
-    const headers = ["Name", "Policy #", "COC #", "OR #", "Plate #"];
-    let xPosition = 15;
+      // Company name - centered, no circle
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.setTextColor(...colors.primary);
+      doc.text("ALPHA INSURANCE & SURETY COMPANY, INC.", pageWidth / 2, yPosition, { align: "center" });
+      yPosition += 6;
 
-    headers.forEach((header, index) => {
-      doc.rect(xPosition, yPosition, colWidths[index], 10, "F");
-      doc.text(header, xPosition + colWidths[index] / 2, yPosition + 7, { align: "center" });
-      xPosition += colWidths[index];
-    });
+      // Subtitle
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      doc.setTextColor(...colors.textLight);
+      yPosition += 10;
 
-    yPosition += 12;
+      doc.setDrawColor(...colors.primary);
+      doc.setLineWidth(0.8);
+      doc.line(margin, yPosition, pageWidth - margin, yPosition);
+      doc.setLineWidth(0.3);
+      doc.line(margin, yPosition + 0.5, pageWidth - margin, yPosition + 0.5);
+      yPosition += 8;
 
-    doc.setFont(undefined, "normal");
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(9);
+      const titleWidth = 80;
+      const titleX = (pageWidth - titleWidth) / 2;
+      doc.setFillColor(...colors.primary);
+      doc.roundedRect(titleX, yPosition - 5, titleWidth, 10, 2, 2, "F");
+      
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.setTextColor(...colors.white);
+      doc.text("INSURANCE RECORDS LIST", pageWidth / 2, yPosition + 1, { align: "center" });
+      yPosition += 10;
+
+      const today = new Date().toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(...colors.textLight);
+      doc.text(`Generated on: ${today}`, pageWidth - margin, yPosition, { align: "right" });
+      doc.text(`Total Records: ${users.length}`, margin, yPosition);
+      yPosition += 8;
+    };
+
+    const wrapText = (text, maxWidth) => {
+      if (!text) return [''];
+      const words = String(text).split(' ');
+      const lines = [];
+      let currentLine = words[0];
+
+      for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const width = doc.getTextWidth(currentLine + " " + word);
+        if (width < maxWidth) {
+          currentLine += " " + word;
+        } else {
+          lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+      lines.push(currentLine);
+      return lines;
+    };
+
+    const availableWidth = pageWidth - margin * 2;
+    // UPDATED COLUMN WIDTHS TO INCLUDE PREMIUM AND CHARGES
+    const colWidths = [
+      availableWidth * 0.08,   // ASSURED NAME
+      availableWidth * 0.09,   // ADDRESS
+      availableWidth * 0.035,  // COC NUMBER
+      availableWidth * 0.035,  // OR NUMBER
+      availableWidth * 0.04,   // POLICY NUMBER
+      availableWidth * 0.035,  // ISSUED
+      availableWidth * 0.035,  // RECEIVED
+      availableWidth * 0.05,   // MODEL
+      availableWidth * 0.04,   // MAKE
+      availableWidth * 0.045,  // BODY TYPE
+      availableWidth * 0.035,  // COLOR
+      availableWidth * 0.045,  // PLATE NO
+      availableWidth * 0.045,  // CHASSIS NO
+      availableWidth * 0.045,  // MOTOR NO
+      availableWidth * 0.045,  // PREMIUM
+      availableWidth * 0.045,  // OTHER CHARGES
+      availableWidth * 0.045,  // DOC STAMPS
+      availableWidth * 0.04,   // E-VAT
+      availableWidth * 0.04,   // LOCAL GOVT TAX
+      availableWidth * 0.04,   // AUTH FEE
+      availableWidth * 0.055   // GRAND TOTAL
+    ];
+
+    // UPDATED HEADERS TO INCLUDE PREMIUM AND CHARGES
+    const headers = [
+      "ASSURED", "ADDRESS", "COC", "OR", "POLICY", 
+      "ISSUED", "RECV'D", "MODEL", "MAKE", "BODY", 
+      "COLOR", "PLATE", "CHASSIS", "MOTOR", "PREMIUM",
+      "OTHER", "DOC", "E-VAT", "LGT", "AUTH", "TOTAL"
+    ];
+    const headerHeight = 12;
+
+    const drawTableHeader = () => {
+      doc.setFillColor(...colors.primaryDark);
+      doc.rect(margin, yPosition, availableWidth, 1, "F");
+      
+      doc.setFillColor(...colors.primary);
+      doc.rect(margin, yPosition + 1, availableWidth, headerHeight - 1, "F");
+      
+      doc.setTextColor(...colors.white);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(6.5);
+
+      let x = margin;
+      headers.forEach((header, idx) => {
+        const textX = x + colWidths[idx] / 2;
+        const textY = yPosition + 8;
+        
+        doc.text(header, textX, textY, { 
+          align: "center",
+          maxWidth: colWidths[idx] - 2
+        });
+        
+        if (idx < headers.length - 1) {
+          doc.setDrawColor(255, 255, 255, 0.3);
+          doc.setLineWidth(0.2);
+          doc.line(x + colWidths[idx], yPosition + 2, x + colWidths[idx], yPosition + headerHeight - 2);
+        }
+        
+        x += colWidths[idx];
+      });
+      
+      yPosition += headerHeight;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(6.5);
+      doc.setTextColor(...colors.text);
+    };
+
+    const addNewPage = () => {
+      doc.addPage();
+      yPosition = margin;
+      drawPageHeader();
+      drawTableHeader();
+    };
+
+    // Helper function to format currency for PDF (removes ₱ symbol to avoid encoding issues)
+    const formatCurrency = (value) => {
+      if (!value) return '';
+      const strValue = String(value);
+      // Remove peso sign if present (causes encoding issues in PDF)
+      return strValue.replace('₱', 'PHP ').replace('PHP PHP', 'PHP ');
+    };
+
+    drawPageHeader();
+    drawTableHeader();
 
     users.forEach((user, rowIndex) => {
-      if (yPosition > pageHeight - 20) {
-        doc.addPage();
-        yPosition = 20;
+      const rowData = [
+        user.assuredName || user.name || '',
+        user.address || '',
+        user.cocNumber || user.coc || '',
+        user.orNumber || user.or || '',
+        user.policyNumber || user.pn || '',
+        user.issued || '',
+        user.received || '',
+        user.model || '',
+        user.make || '',
+        user.bodyType || '',
+        user.color || '',
+        user.plateNo || user.plate || '',
+        user.chassisNo || '',
+        user.motorNo || '',
+        formatCurrency(user.premium),
+        formatCurrency(user.otherCharges),
+        formatCurrency(user.docStamps),
+        formatCurrency(user.eVat),
+        formatCurrency(user.localGovtTax),
+        formatCurrency(user.authFee),
+        formatCurrency(user.grandTotal)
+      ];
+
+      let maxLines = 1;
+      rowData.forEach((data, colIndex) => {
+        const lines = wrapText(String(data), colWidths[colIndex] - 2);
+        if (lines.length > maxLines) maxLines = lines.length;
+      });
+      
+      const calculatedRowHeight = Math.max(8, maxLines * 4);
+
+      if (yPosition + calculatedRowHeight > pageHeight - margin - 15) {
+        addNewPage();
       }
 
       xPosition = 15;
       const rowData = [user.name, user.pn, user.coc, user.or, user.plate];
       
       if (rowIndex % 2 === 0) {
-        doc.setFillColor(245, 245, 245);
-        doc.rect(15, yPosition, pageWidth - 30, 10, "F");
+        doc.setFillColor(...colors.secondary);
+        doc.rect(margin, yPosition, availableWidth, calculatedRowHeight, "F");
+      } else {
+        doc.setFillColor(...colors.white);
+        doc.rect(margin, yPosition, availableWidth, calculatedRowHeight, "F");
       }
 
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.1);
+      doc.line(margin, yPosition + calculatedRowHeight, pageWidth - margin, yPosition + calculatedRowHeight);
+
+      let x = margin;
       rowData.forEach((data, colIndex) => {
-        doc.text(String(data), xPosition + colWidths[colIndex] / 2, yPosition + 7, { align: "center" });
-        xPosition += colWidths[colIndex];
+        const textX = x + 1.5;
+        let textY = yPosition + 5;
+
+        let displayData = String(data);
+        let isBold = false;
+        
+        // Bold the name and grand total
+        if (colIndex === 0 || colIndex === 20) {
+          isBold = true;
+          doc.setTextColor(...colors.text);
+        } else {
+          doc.setTextColor(...colors.text);
+        }
+
+        if (isBold) {
+          doc.setFont("helvetica", "bold");
+        } else {
+          doc.setFont("helvetica", "normal");
+        }
+
+        const lines = wrapText(displayData, colWidths[colIndex] - 3);
+        lines.forEach((line, lineIndex) => {
+          if (lineIndex > 0) textY += 3.5;
+          doc.text(line, textX, textY, {
+            align: "left",
+            maxWidth: colWidths[colIndex] - 3
+          });
+        });
+
+        x += colWidths[colIndex];
       });
 
-      yPosition += 10;
+      yPosition += calculatedRowHeight;
     });
 
-    doc.save(`Records_${new Date().toISOString().split('T')[0]}.pdf`);
-    setToast({ message: 'PDF file exported successfully!', type: 'success' });
+    const totalPages = doc.internal.pages.length - 1;
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      
+      doc.setDrawColor(200, 200, 200);
+      doc.setLineWidth(0.3);
+      doc.line(margin, pageHeight - 12, pageWidth - margin, pageHeight - 12);
+      
+      doc.setFontSize(7);
+      doc.setTextColor(...colors.textLight);
+      doc.setFont("helvetica", "normal");
+      
+      doc.text("Alpha Insurance & Surety Company, Inc.", margin, pageHeight - 8);
+      doc.text("CONFIDENTIAL DOCUMENT", pageWidth / 2, pageHeight - 8, { align: "center" });
+      doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 8, { align: "right" });
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    doc.save(`Alpha_Insurance_Records_${today}.pdf`);
+    setToast({ message: '📄 Complete insurance records with charges exported successfully!', type: 'success' });
   };
 
 // Loading state
@@ -885,7 +1221,6 @@ const openEdit = (user) => {
         />
       )}
 
-      {/* Top actions */}
       <div className="top-bar">
         <div className="top-left">
           <button className="btn add-btn" onClick={handleAddClick} style={noBorderStyle}>ADD</button>
@@ -908,12 +1243,8 @@ const openEdit = (user) => {
               cursor: "pointer",
               transition: "all 0.3s"
             }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = "#059669";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = "#10B981";
-            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = "#059669"}
+            onMouseLeave={(e) => e.target.style.backgroundColor = "#10B981"}
             title="Export to Excel"
           >
             <FiDownload size={18} /> Excel
@@ -935,12 +1266,8 @@ const openEdit = (user) => {
               cursor: "pointer",
               transition: "all 0.3s"
             }}
-            onMouseEnter={(e) => {
-              e.target.style.backgroundColor = "#DC2626";
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.backgroundColor = "#EF4444";
-            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = "#DC2626"}
+            onMouseLeave={(e) => e.target.style.backgroundColor = "#EF4444"}
             title="Export to PDF"
           >
             <FiDownload size={18} /> PDF
@@ -948,7 +1275,6 @@ const openEdit = (user) => {
         </div>
       </div>
 
-      {/* Search section */}
       <div className="search-bar">
         <div className="date-group">
           <div className="field">
@@ -1021,7 +1347,6 @@ const openEdit = (user) => {
         </div>
       </div>
 
-      {/* Table with sticky header */}
       <div className="table-wrapper">
         <table style={{ borderCollapse: "separate", borderSpacing: 0 }}>
           <thead>
