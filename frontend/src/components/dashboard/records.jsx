@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/record.css";
-import { FiEye, FiEdit2, FiTrash2, FiDownload, FiUser, FiFileText, FiHash, FiCreditCard, FiAlertCircle } from "react-icons/fi";
+import { FiEye, FiEdit2, FiTrash2, FiDownload, FiAlertCircle } from "react-icons/fi";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import Toast from "../../common/toast";
@@ -71,7 +71,7 @@ const Records = () => {
     }
 
     if (results.length === 0) {
-      setToast({ message: '🔍 No records found matching your search criteria', type: 'error' });
+      setToast({ message: ' No records found matching your search criteria', type: 'error' });
     } else if (results.length === 1) {
       setToast({ message: ' Found 1 matching record', type: 'success' });
     } else {
@@ -389,7 +389,7 @@ const Records = () => {
       setCurrentPage((p) => Math.min(p, Math.max(1, Math.ceil(newUsers.length / itemsPerPage))));
       return newUsers;
     });
-    setToast({ message: `🗑️ Record for "${deletedName}" deleted successfully`, type: 'success' });
+    setToast({ message: ` Record for "${deletedName}" deleted successfully`, type: 'success' });
     closeModal();
   };
   // --- end modal / edit state & handlers ---
@@ -435,6 +435,19 @@ const Records = () => {
     borderRadius: "20px",
     width: "95%",
     maxWidth: "1000px",
+    maxHeight: "95vh",
+    overflow: "hidden",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.05)",
+    animation: "slideUpScale 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
+    display: "flex",
+    flexDirection: "column"
+  };
+
+  const deleteModal = {
+    backgroundColor: "#ffffff",
+    borderRadius: "20px",
+    width: "95%",
+    maxWidth: "550px",
     maxHeight: "95vh",
     overflow: "hidden",
     boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.05)",
@@ -612,7 +625,7 @@ const Records = () => {
     ];
 
     XLSX.writeFile(workbook, `Records_${new Date().toISOString().split('T')[0]}.xlsx`);
-    setToast({ message: '📊 Excel file exported successfully!', type: 'success' });
+    setToast({ message: ' Excel file exported successfully!', type: 'success' });
   };
 
   // Export to PDF
@@ -682,7 +695,7 @@ const Records = () => {
 
     // Save PDF
     doc.save(`Records_${new Date().toISOString().split('T')[0]}.pdf`);
-    setToast({ message: '📄 PDF file exported successfully!', type: 'success' });
+    setToast({ message: ' PDF file exported successfully!', type: 'success' });
   };
 
   return (
@@ -966,7 +979,7 @@ const Records = () => {
                   whiteSpace: "nowrap"
                 }}
               >
-                🔍 Search
+                Search
               </button>
             </div>
           </div>
@@ -1179,7 +1192,7 @@ const Records = () => {
 
       {modalOpen && modalType === "delete" && deleteConfirmUser && (
         <div style={premiumModalBackdrop}>
-          <div style={premiumModal} onClick={(e) => e.stopPropagation()}>
+          <div style={deleteModal} onClick={(e) => e.stopPropagation()}>
             {/* Modal Header */}
             <div style={premiumModalHeader}>
               <div className="modal-header-decoration"></div>
@@ -1191,41 +1204,41 @@ const Records = () => {
 
             {/* Modal Body */}
             <div style={premiumModalBody}>
-              <div style={{ textAlign: "center", padding: "30px 20px" }}>
+              <div style={{ textAlign: "center", padding: "20px 16px" }}>
                 <div style={{
                   ...iconBadge,
                   backgroundColor: "#fee2e2",
                   color: "#dc2626",
-                  margin: "0 auto 24px"
+                  margin: "0 auto 16px"
                 }}
                 className="icon-badge-pulse">
-                  <FiTrash2 size={28} />
+                  <FiTrash2 size={24} />
                 </div>
                 <h4 style={{ 
-                  fontSize: "22px", 
+                  fontSize: "18px", 
                   fontWeight: "700", 
                   color: "#111827",
-                  marginBottom: "16px" 
+                  marginBottom: "10px" 
                 }}>
                   Confirm Deletion
                 </h4>
                 <p style={{ 
-                  fontSize: "1x",
+                  fontSize: "0.9em",
                   color: "#6b7280", 
-                  marginBottom: "12px",
-                  lineHeight: "1.7"
+                  marginBottom: "8px",
+                  lineHeight: "1.5"
                 }}>
                   You are about to permanently delete the record for
                 </p>
                 <div style={{
-                  padding: "16px 24px",
+                  padding: "12px 16px",
                   backgroundColor: "#f9fafb",
-                  borderRadius: "12px",
-                  margin: "16px 0",
-                  border: "2px solid #e5e7eb"
+                  borderRadius: "8px",
+                  margin: "12px 0",
+                  border: "1px solid #e5e7eb"
                 }}>
                   <p style={{
-                    fontSize: "18px",
+                    fontSize: "15px",
                     fontWeight: "700",
                     color: "#111827",
                     margin: 0
@@ -1237,14 +1250,14 @@ const Records = () => {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: "8px",
-                  padding: "12px 20px",
+                  gap: "6px",
+                  padding: "10px 14px",
                   backgroundColor: "#fef3c7",
                   border: "1px solid #fbbf24",
-                  borderRadius: "10px",
-                  marginTop: "20px"
+                  borderRadius: "8px",
+                  marginTop: "14px"
                 }}>
-                  <FiAlertCircle size={18} color="#92400e" />
+                  <FiAlertCircle size={16} color="#92400e" />
                   <p style={{ 
                     fontSize: "13px",
                     color: "#92400e",

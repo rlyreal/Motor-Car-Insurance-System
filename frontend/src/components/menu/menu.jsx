@@ -741,15 +741,85 @@ function Menu() {
                     </div>
                     <div>
                       <label htmlFor="year-select" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Year <span style={{color: '#ef4444'}}>*</span></label>
-                      <select id="year-select" name="year" value={formData.year} onChange={handleChange} onBlur={handleBlur} aria-label="Policy year" onFocus={(e) => {
-                        e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
-                        e.target.style.backgroundColor = '#f8fdf9';
-                      }} style={{...inputBaseStyle, borderColor: (touched.year && !formData.year) ? '#ef4444' : inputBaseStyle.borderColor}}>
-                        <option>Select</option>
-                        <option>2026</option>
-                        <option>2025</option>
-                        <option>2024</option>
-                      </select>
+                      <div style={{position: 'relative', display: 'inline-block', width: '100%'}}>
+                        <input 
+                          id="year-select"
+                          type="text"
+                          readOnly
+                          value={formData.year || 'Select'}
+                          placeholder="Select"
+                          onClick={(e) => {
+                            const picker = e.currentTarget.nextElementSibling;
+                            if (picker) picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
+                          }}
+                          style={{...inputBaseStyle, borderColor: (touched.year && !formData.year) ? '#ef4444' : inputBaseStyle.borderColor, cursor: 'pointer'}}
+                          aria-label="Policy year"
+                        />
+                        <div style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: 0,
+                          right: 0,
+                          display: 'none',
+                          backgroundColor: 'white',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                          zIndex: 1000,
+                          padding: '16px',
+                          marginTop: '4px',
+                          minWidth: '280px',
+                          maxHeight: '400px',
+                          overflowY: 'auto'
+                        }}
+                        onClick={(e) => e.stopPropagation()}>
+                          <div style={{textAlign: 'center', marginBottom: '12px', fontWeight: '700', color: '#1a1a1a'}}>
+                            Select Year
+                          </div>
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(4, 1fr)',
+                            gap: '8px'
+                          }}>
+                            {Array.from({ length: 125 }, (_, i) => 2050 - i).map((year) => (
+                              <button
+                                key={year}
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setFormData(prev => ({ ...prev, year: year.toString() }));
+                                  const picker = e.currentTarget.closest('[style*="position: absolute"]');
+                                  if (picker) picker.style.display = 'none';
+                                }}
+                                style={{
+                                  padding: '10px 8px',
+                                  border: formData.year === year.toString() ? '2px solid #5A8C3A' : '1px solid #e5e7eb',
+                                  borderRadius: '6px',
+                                  backgroundColor: formData.year === year.toString() ? '#e8f5e9' : 'white',
+                                  color: formData.year === year.toString() ? '#2D5016' : '#6b7280',
+                                  fontWeight: formData.year === year.toString() ? '700' : '500',
+                                  cursor: 'pointer',
+                                  fontSize: '13px',
+                                  transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (formData.year !== year.toString()) {
+                                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                                    e.currentTarget.style.borderColor = '#5A8C3A';
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (formData.year !== year.toString()) {
+                                    e.currentTarget.style.backgroundColor = 'white';
+                                    e.currentTarget.style.borderColor = '#e5e7eb';
+                                  }
+                                }}>
+                                {year}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <div>
                       <label htmlFor="date-issued-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Issued <span style={{color: '#ef4444'}}>*</span></label>
