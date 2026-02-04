@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/record.css";
-import { FiEye, FiEdit2, FiTrash2, FiDownload, FiUser, FiFileText, FiHash, FiCreditCard, FiAlertCircle } from "react-icons/fi";
+import { FiEye, FiEdit2, FiTrash2, FiDownload, FiAlertCircle } from "react-icons/fi";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import Toast from "../../common/toast";
@@ -15,6 +15,8 @@ const Records = () => {
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const [toast, setToast] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [users, setUsers] = useState([]);
   const navigate = useNavigate();
   
   // Modal states
@@ -23,6 +25,74 @@ const Records = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [editData, setEditData] = useState(null);
   const [deleteConfirmUser, setDeleteConfirmUser] = useState(null);
+
+  // Fetch policies from database on component mount
+  useEffect(() => {
+    const fetchPolicies = async () => {
+      try {
+        setIsLoading(true);
+        const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+        const response = await fetch(`${backendUrl}/api/policies`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch policies: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        
+        // Transform database records to match component format
+        const transformedPolicies = (data.data || []).map(policy => ({
+          id: policy.id,
+          name: policy.assured,
+          assuredName: policy.assured,
+          address: policy.address,
+          policyNumber: policy.policy_number,
+          pn: policy.policy_number,
+          cocNumber: policy.coc_number,
+          coc: policy.coc_number,
+          orNumber: policy.or_number,
+          or: policy.or_number,
+          model: policy.model,
+          fromDate: policy.insurance_from_date ? policy.insurance_from_date.split('T')[0] : "",
+          toDate: policy.insurance_to_date ? policy.insurance_to_date.split('T')[0] : "",
+          issued: policy.date_issued ? policy.date_issued.split('T')[0] : "",            
+          received: policy.date_received ? policy.date_received.split('T')[0] : "",
+          make: policy.make,
+          bodyType: policy.body_type,
+          color: policy.color,
+          plateNo: policy.plate_no,
+          plate: policy.plate_no,
+          chassisNo: policy.chassis_no,
+          motorNo: policy.motor_no,
+          mvFileNo: policy.mv_file_no,
+          premium: `₱${parseFloat(policy.premium).toFixed(2)}`,
+          otherCharges: `₱${parseFloat(policy.other_charges).toFixed(2)}`,
+          docStamps: `₱${parseFloat(policy.doc_stamps).toFixed(2)}`,
+          eVat: `₱${parseFloat(policy.e_vat).toFixed(2)}`,
+          localGovtTax: `₱${parseFloat(policy.lgt).toFixed(2)}`,
+          authFee: `₱${parseFloat(policy.auth_fee).toFixed(2)}`,
+          grandTotal: `₱${parseFloat(policy.total_premium).toFixed(2)}`,
+          dateCreated: policy.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+          cType: policy.policy_type,
+          year: policy.policy_year,
+          serialChassisNo: policy.chassis_no
+        }));
+
+        setUsers(transformedPolicies);
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Error fetching policies:', error);
+        setToast({ 
+          message: 'Failed to load records from database', 
+          type: 'error' 
+        });
+        setUsers([]);
+        setIsLoading(false);
+      }
+    };
+
+    fetchPolicies();
+  }, []);
   
   const handleAddClick = () => {
     navigate('/menu');
@@ -70,253 +140,15 @@ const Records = () => {
     }
 
     if (results.length === 0) {
-      setToast({ message: '🔍 No records found matching your search criteria', type: 'error' });
+      setToast({ message: 'No records found matching your search criteria', type: 'error' });
     } else if (results.length === 1) {
-      setToast({ message: ' Found 1 matching record', type: 'success' });
+      setToast({ message: 'Found 1 matching record', type: 'success' });
     } else {
-      setToast({ message: ` Found ${results.length} matching records`, type: 'success' });
+      setToast({ message: `Found ${results.length} matching records`, type: 'success' });
     }
   };
 
-  // Initialize users from localStorage submitted records
-  const [users, setUsers] = useState(() => {
-    const submittedRecords = JSON.parse(localStorage.getItem('submittedRecords')) || [];
-    const sampleUsers = [
-      { 
-        id: 1, 
-        name: "Mark Dave Catubig",
-        assuredName: "Mark Dave Catubig",
-        address: "123 Main St, Manila",
-        policyNumber: "POL-2025-001",
-        pn: "10001", 
-        cocNumber: "COC001",
-        coc: "COC001", 
-        orNumber: "OR001",
-        or: "OR001", 
-        model: "2025 Camry",
-        fromDate: "2025-01-01",
-        toDate: "2026-01-01",
-        issued: "2025-01-01",
-        received: "2025-01-02",
-        make: "Toyota",
-        bodyType: "Sedan",
-        color: "Silver",
-        plateNo: "ABC-001",
-        plate: "ABC-001",
-        chassisNo: "CH123456789",
-        motorNo: "MOT987654321",
-        mvFileNo: "MV2025001",
-        premium: "₱5,000",
-        otherCharges: "₱500",
-        docStamps: "₱625",
-        eVat: "₱600",
-        localGovtTax: "₱25",
-        authFee: "₱50.40",
-        grandTotal: "₱6,800.40",
-        dateCreated: "2025-01-15"
-      },
-      { 
-        id: 2, 
-        name: "Vince Bryant Cabunilas",
-        assuredName: "Vince Bryant Cabunilas",
-        address: "456 Oak Ave, Quezon City",
-        policyNumber: "POL-2025-002",
-        pn: "10002", 
-        cocNumber: "COC002",
-        coc: "COC002", 
-        orNumber: "OR002",
-        or: "OR002", 
-        model: "2025 CR-V",
-        fromDate: "2025-01-10",
-        toDate: "2026-01-10",
-        issued: "2025-01-10",
-        received: "2025-01-11",
-        make: "Honda",
-        bodyType: "SUV",
-        color: "Black",
-        plateNo: "ABC-002",
-        plate: "ABC-002",
-        chassisNo: "CH223456789",
-        motorNo: "MOT287654321",
-        mvFileNo: "MV2025002",
-        premium: "₱3,500",
-        otherCharges: "₱300",
-        docStamps: "₱437.50",
-        eVat: "₱420",
-        localGovtTax: "₱17.50",
-        authFee: "₱50.40",
-        grandTotal: "₱4,825.40",
-        dateCreated: "2025-01-18"
-      },
-      { 
-        id: 3, 
-        name: "Real John Palacio",
-        assuredName: "Real John Palacio",
-        address: "789 Pine Rd, Makati",
-        policyNumber: "POL-2025-003",
-        pn: "10003", 
-        cocNumber: "COC003",
-        coc: "COC003", 
-        orNumber: "OR003",
-        or: "OR003", 
-        model: "2025 F-150",
-        fromDate: "2025-01-05",
-        toDate: "2026-01-05",
-        issued: "2025-01-05",
-        received: "2025-01-06",
-        make: "Ford",
-        bodyType: "Truck",
-        color: "Red",
-        plateNo: "ABC-003",
-        plate: "ABC-003",
-        chassisNo: "CH323456789",
-        motorNo: "MOT387654321",
-        mvFileNo: "MV2025003",
-        premium: "₱6,000",
-        otherCharges: "₱600",
-        docStamps: "₱750",
-        eVat: "₱720",
-        localGovtTax: "₱30",
-        authFee: "₱50.40",
-        grandTotal: "₱8,150.40",
-        dateCreated: "2025-01-20"
-      },
-      { 
-        id: 4, 
-        name: "Jeff Monreal",
-        assuredName: "Jeff Monreal",
-        address: "321 Elm St, Pasay",
-        policyNumber: "POL-2025-004",
-        pn: "10004", 
-        cocNumber: "COC004",
-        coc: "COC004", 
-        orNumber: "OR004",
-        or: "OR004", 
-        model: "2025 Elantra",
-        fromDate: "2025-01-12",
-        toDate: "2026-01-12",
-        issued: "2025-01-12",
-        received: "2025-01-13",
-        make: "Hyundai",
-        bodyType: "Sedan",
-        color: "White",
-        plateNo: "ABC-004",
-        plate: "ABC-004",
-        chassisNo: "CH423456789",
-        motorNo: "MOT487654321",
-        mvFileNo: "MV2025004",
-        premium: "₱4,800",
-        otherCharges: "₱400",
-        docStamps: "₱600",
-        eVat: "₱576",
-        localGovtTax: "₱24",
-        authFee: "₱50.40",
-        grandTotal: "₱6,450.40",
-        dateCreated: "2025-01-22"
-      },
-      { 
-        id: 5, 
-        name: "Rovic Steve Real",
-        assuredName: "Rovic Steve Real",
-        address: "654 Birch Ln, Las Piñas",
-        policyNumber: "POL-2025-005",
-        pn: "10005", 
-        cocNumber: "COC005",
-        coc: "COC005", 
-        orNumber: "OR005",
-        or: "OR005", 
-        model: "2025 YZF-R15",
-        fromDate: "2025-01-20",
-        toDate: "2026-01-20",
-        issued: "2025-01-20",
-        received: "2025-01-21",
-        make: "Yamaha",
-        bodyType: "Motorcycle",
-        color: "Blue",
-        plateNo: "ABC-005",
-        plate: "ABC-005",
-        chassisNo: "CH523456789",
-        motorNo: "MOT587654321",
-        mvFileNo: "MV2025005",
-        premium: "₱2,000",
-        otherCharges: "₱200",
-        docStamps: "₱250",
-        eVat: "₱240",
-        localGovtTax: "₱10",
-        authFee: "₱50.40",
-        grandTotal: "₱2,750.40",
-        dateCreated: "2025-01-25"
-      },
-      { 
-        id: 6, 
-        name: "Alexus Sundae Sagaral",
-        assuredName: "Alexus Sundae Sagaral",
-        address: "987 Spruce Way, Cebu",
-        policyNumber: "POL-2025-006",
-        pn: "10006", 
-        cocNumber: "COC006",
-        coc: "COC006", 
-        orNumber: "OR006",
-        or: "OR006", 
-        model: "2025 CX-5",
-        fromDate: "2025-01-08",
-        toDate: "2026-01-08",
-        issued: "2025-01-08",
-        received: "2025-01-09",
-        make: "Mazda",
-        bodyType: "Sedan",
-        color: "Gray",
-        plateNo: "ABC-006",
-        plate: "ABC-006",
-        chassisNo: "CH623456789",
-        motorNo: "MOT687654321",
-        mvFileNo: "MV2025006",
-        premium: "₱6,500",
-        otherCharges: "₱700",
-        docStamps: "₱812.50",
-        eVat: "₱780",
-        localGovtTax: "₱32.50",
-        authFee: "₱50.40",
-        grandTotal: "₱8,875.40",
-        dateCreated: "2025-01-26"
-      },
-      { 
-        id: 7, 
-        name: "Julius Micheal Escoton",
-        assuredName: "Julius Micheal Escoton",
-        address: "159 Maple Dr, Davao",
-        policyNumber: "POL-2025-007",
-        pn: "10007", 
-        cocNumber: "COC007",
-        coc: "COC007", 
-        orNumber: "OR007",
-        or: "OR007", 
-        model: "2025 X-Trail",
-        fromDate: "2025-01-18",
-        toDate: "2026-01-18",
-        issued: "2025-01-18",
-        received: "2025-01-19",
-        make: "Nissan",
-        bodyType: "SUV",
-        color: "Gold",
-        plateNo: "ABC-007",
-        plate: "ABC-007",
-        chassisNo: "CH723456789",
-        motorNo: "MOT787654321",
-        mvFileNo: "MV2025007",
-        premium: "₱4,100",
-        otherCharges: "₱350",
-        docStamps: "₱512.50",
-        eVat: "₱492",
-        localGovtTax: "₱20.50",
-        authFee: "₱50.40",
-        grandTotal: "₱5,525.40",
-        dateCreated: "2025-01-28"
-      }
-    ];
-    return [...sampleUsers, ...submittedRecords];
-  });
-
+  // items per page becomes selectable by admin (5 or 10)
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -342,15 +174,30 @@ const Records = () => {
     setModalOpen(true);
   };
 
-  const openEdit = (user) => {
-    const combinedModel = user.year ? `${user.year} ${user.model}` : user.model || "";
-    const initialEdit = { ...user, model: combinedModel };
-    if ('year' in initialEdit) delete initialEdit.year;
-    setSelectedUser(user);
-    setEditData(initialEdit);
-    setModalType("edit");
-    setModalOpen(true);
+const openEdit = (user) => {
+  // Strip currency symbols from premium and other charges
+  const premiumNum = parseFloat(user.premium?.toString().replace(/[₱,]/g, '')) || 0;
+  const otherChargesNum = parseFloat(user.otherCharges?.toString().replace(/[₱,]/g, '')) || 0;
+  
+  const initialEdit = { 
+    ...user, 
+    premium: premiumNum,
+    otherCharges: otherChargesNum,
+    // Keep year for payload construction
+    year: user.year,
+    // Ensure all required fields have values (not undefined/null)
+    cocNumber: user.cocNumber || user.coc || "N/A",
+    orNumber: user.orNumber || user.or || "N/A",
+    policyNumber: user.policyNumber || user.pn || "N/A",
+    plateNo: user.plateNo || user.plate || "N/A",
+    serialChassisNo: user.serialChassisNo || user.chassisNo || "N/A"
   };
+  
+  setSelectedUser(user);
+  setEditData(initialEdit);
+  setModalType("edit");
+  setModalOpen(true);
+};
 
   const openDeleteConfirm = (user) => {
     setDeleteConfirmUser(user);
@@ -366,25 +213,182 @@ const Records = () => {
     setDeleteConfirmUser(null);
   };
 
-  const handleSaveEdit = () => {
-    if (!editData) return;
-    setUsers((prev) => prev.map((u) => (u.id === editData.id ? editData : u)));
-    setToast({ message: '✓ Record updated successfully!', type: 'success' });
-    closeModal();
+  // Real-time calculation handler for edit
+  const handleEditChange = (field, value) => {
+    const updated = { ...editData, [field]: value };
+    
+    // Auto-calculate taxes when premium or other charges change
+    if (field === 'premium' || field === 'otherCharges') {
+      const premiumNum = parseFloat(updated.premium) || 0;
+      const otherChargesNum = parseFloat(updated.otherCharges) || 0;
+      const subtotal = premiumNum + otherChargesNum;
+      
+      // Calculate taxes
+      const docStamps = subtotal * 0.125; // 12.5%
+      const eVat = subtotal * 0.12; // 12%
+      const localGovtTax = subtotal * 0.005; // 0.5%
+      const authFee = 50.40; // Fixed
+      const totalPremium = subtotal + docStamps + eVat + localGovtTax + authFee;
+      
+      setEditData({
+        ...updated,
+        docStamps: docStamps > 0 ? `₱${docStamps.toFixed(2)}` : '₱0.00',
+        eVat: eVat > 0 ? `₱${eVat.toFixed(2)}` : '₱0.00',
+        localGovtTax: localGovtTax > 0 ? `₱${localGovtTax.toFixed(2)}` : '₱0.00',
+        authFee: `₱${authFee.toFixed(2)}`,
+        grandTotal: totalPremium > 0 ? `₱${totalPremium.toFixed(2)}` : '₱0.00'
+      });
+    } else {
+      setEditData(updated);
+    }
   };
 
-  const confirmDelete = () => {
+    const handleSaveEdit = async () => {
+      if (!editData) return;
+      
+      try {
+        const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+        
+        // Extract numeric values
+        const premiumNum = parseFloat(editData.premium) || 0;
+        const otherChargesNum = parseFloat(editData.otherCharges) || 0;
+        const docStampsNum = parseFloat(editData.docStamps?.toString().replace(/[₱,]/g, '')) || 0;
+        const eVatNum = parseFloat(editData.eVat?.toString().replace(/[₱,]/g, '')) || 0;
+        const localGovtTaxNum = parseFloat(editData.localGovtTax?.toString().replace(/[₱,]/g, '')) || 0;
+        const authFeeNum = parseFloat(editData.authFee?.toString().replace(/[₱,]/g, '')) || 50.40;
+        const totalPremiumNum = parseFloat(editData.grandTotal?.toString().replace(/[₱,]/g, '')) || 0;
+        
+        const policyYear = editData.year || parseInt(editData.model?.split(' ')[0]) || new Date().getFullYear();
+        
+        // Helper to ensure non-empty string
+        const ensureValue = (val) => {
+          const str = String(val || "").trim();
+          return str.length > 0 ? str : "N/A";
+        };
+        
+        const payload = {
+          assured: ensureValue(editData.assuredName || editData.name),
+          address: ensureValue(editData.address),
+          coc_number: ensureValue(editData.cocNumber || editData.coc),
+          or_number: ensureValue(editData.orNumber || editData.or),
+          policy_number: ensureValue(editData.policyNumber || editData.pn),
+          policy_type: ensureValue(editData.cType),
+          policy_year: policyYear,
+          date_issued: editData.issued || "0000-00-00",
+          date_received: editData.received || "0000-00-00",
+          insurance_from_date: editData.fromDate || "0000-00-00",
+          insurance_to_date: editData.toDate || "0000-00-00",
+          model: ensureValue(editData.model),
+          make: ensureValue(editData.make),
+          body_type: ensureValue(editData.bodyType),
+          color: ensureValue(editData.color),
+          mv_file_no: ensureValue(editData.mvFileNo),
+          plate_no: ensureValue(editData.plateNo || editData.plate),
+          chassis_no: ensureValue(editData.serialChassisNo || editData.chassisNo),
+          motor_no: ensureValue(editData.motorNo),
+          premium: premiumNum,
+          other_charges: otherChargesNum,
+          doc_stamps: docStampsNum,
+          e_vat: eVatNum,
+          lgt: localGovtTaxNum,
+          auth_fee: authFeeNum,
+          total_premium: totalPremiumNum
+        };
+
+        console.log('Payload being sent:', JSON.stringify(payload, null, 2));
+
+        const response = await fetch(`${backendUrl}/api/policies/${editData.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('Backend error response:', errorData);
+          throw new Error(errorData.message || 'Failed to update policy');
+        }
+
+        // Refetch all policies to get latest data from database
+        const fetchResponse = await fetch(`${backendUrl}/api/policies`);
+        if (fetchResponse.ok) {
+          const data = await fetchResponse.json();
+          const transformedPolicies = (data.data || []).map(policy => ({
+            id: policy.id,
+            name: policy.assured,
+            assuredName: policy.assured,
+            address: policy.address,
+            policyNumber: policy.policy_number,
+            pn: policy.policy_number,
+            cocNumber: policy.coc_number,
+            coc: policy.coc_number,
+            orNumber: policy.or_number,
+            or: policy.or_number,
+            model: policy.model,
+            fromDate: policy.insurance_from_date ? policy.insurance_from_date.split('T')[0] : "",
+            toDate: policy.insurance_to_date ? policy.insurance_to_date.split('T')[0] : "",
+            issued: policy.date_issued ? policy.date_issued.split('T')[0] : "",            
+            received: policy.date_received ? policy.date_received.split('T')[0] : "",
+            make: policy.make,
+            bodyType: policy.body_type,
+            color: policy.color,
+            plateNo: policy.plate_no,
+            plate: policy.plate_no,
+            chassisNo: policy.chassis_no,
+            motorNo: policy.motor_no,
+            mvFileNo: policy.mv_file_no,
+            premium: `₱${parseFloat(policy.premium).toFixed(2)}`,
+            otherCharges: `₱${parseFloat(policy.other_charges).toFixed(2)}`,
+            docStamps: `₱${parseFloat(policy.doc_stamps).toFixed(2)}`,
+            eVat: `₱${parseFloat(policy.e_vat).toFixed(2)}`,
+            localGovtTax: `₱${parseFloat(policy.lgt).toFixed(2)}`,
+            authFee: `₱${parseFloat(policy.auth_fee).toFixed(2)}`,
+            grandTotal: `₱${parseFloat(policy.total_premium).toFixed(2)}`,
+            dateCreated: policy.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+            cType: policy.policy_type,
+            year: policy.policy_year,
+            serialChassisNo: policy.chassis_no
+          }));
+          setUsers(transformedPolicies);
+        }
+
+        setToast({ message: 'Record updated successfully!', type: 'success' });
+        closeModal();
+      } catch (error) {
+        console.error('Error updating policy:', error);
+        setToast({ message: `Failed to update record: ${error.message}`, type: 'error' });
+      }
+    };
+
+  const confirmDelete = async () => {
     if (!deleteConfirmUser) return;
-    const deletedName = deleteConfirmUser.name;
-    setUsers((prev) => {
-      const newUsers = prev.filter((u) => u.id !== deleteConfirmUser.id);
-      setCurrentPage((p) => Math.min(p, Math.max(1, Math.ceil(newUsers.length / itemsPerPage))));
-      return newUsers;
-    });
-    setToast({ message: `🗑️ Record for "${deletedName}" deleted successfully`, type: 'success' });
-    closeModal();
+    
+    try {
+      const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:5000';
+      const response = await fetch(`${backendUrl}/api/policies/${deleteConfirmUser.id}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete policy');
+      }
+
+      const deletedName = deleteConfirmUser.name;
+      setUsers((prev) => {
+        const newUsers = prev.filter((u) => u.id !== deleteConfirmUser.id);
+        setCurrentPage((p) => Math.min(p, Math.max(1, Math.ceil(newUsers.length / itemsPerPage))));
+        return newUsers;
+      });
+      setToast({ message: `Record for "${deletedName}" deleted successfully`, type: 'success' });
+      closeModal();
+    } catch (error) {
+      console.error('Error deleting policy:', error);
+      setToast({ message: `Failed to delete record: ${error.message}`, type: 'error' });
+    }
   };
 
+  // Define header cell style with proper borders for sticky behavior
   const headerStyle = {
     position: "sticky",
     top: 0,
@@ -423,6 +427,19 @@ const Records = () => {
     borderRadius: "20px",
     width: "95%",
     maxWidth: "1000px",
+    maxHeight: "95vh",
+    overflow: "hidden",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.05)",
+    animation: "slideUpScale 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
+    display: "flex",
+    flexDirection: "column"
+  };
+
+  const deleteModal = {
+    backgroundColor: "#ffffff",
+    borderRadius: "20px",
+    width: "95%",
+    maxWidth: "550px",
     maxHeight: "95vh",
     overflow: "hidden",
     boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.05)",
@@ -605,7 +622,6 @@ const Records = () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Insurance Records");
     
-    // Set column widths for better readability
     worksheet["!cols"] = [
       { wch: 25 }, // Assured Name
       { wch: 30 }, // Address
@@ -934,6 +950,9 @@ const Records = () => {
         addNewPage();
       }
 
+      xPosition = 15;
+      const rowData = [user.name, user.pn, user.coc, user.or, user.plate];
+      
       if (rowIndex % 2 === 0) {
         doc.setFillColor(...colors.secondary);
         doc.rect(margin, yPosition, availableWidth, calculatedRowHeight, "F");
@@ -1005,8 +1024,39 @@ const Records = () => {
     setToast({ message: '📄 Complete insurance records with charges exported successfully!', type: 'success' });
   };
 
+// Loading state
+  if (isLoading) {
+    return (
+      <div className="container" style={{ 
+        marginTop: '95px', 
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        minHeight: '80vh',
+        opacity: 0,
+        animation: 'smoothFadeIn 1.4s ease-out forwards'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontSize: '18px', color: '#ffffff', fontWeight: '600' }}>Loading records from database...</p>
+        </div>
+        <style>{`
+          @keyframes smoothFadeIn {
+            from { 
+              opacity: 0;
+              transform: translateY(10px);
+            }
+            to { 
+              opacity: 1;
+              transform: translateY(0);
+            }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
-    <div className="container">
+    <div className="container" style={{ marginTop: '95px' }}>
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }
@@ -1143,6 +1193,24 @@ const Records = () => {
         }
       `}</style>
 
+      {/* Navigation Header */}
+      <div className="nav-header-container" style={{position: 'fixed', top: 0, left: 0, right: 0, width: '100%', maxWidth: '100%', margin: '0', padding: '0', zIndex: 999, boxShadow: '0 8px 24px rgba(45, 80, 22, 0.12)'}}>
+        <div className="nav-header" style={{background: '#fff', borderRadius: '2px', padding: '12px 20px', boxShadow: '0 8px 24px rgba(45, 80, 22, 0.12)', border: 'none', position: 'relative', overflow: 'visible'}}>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', position: 'relative', zIndex: 1}}>
+            <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
+              <div className="logo" style={{flexShrink: 0, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                <img src="/images/alpha.png" alt="Alpha Logo" style={{height: '60px', objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.08))'}} />
+              </div>
+              <div className="title" style={{display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
+                <h1 style={{fontSize: '22px', fontWeight: 900, color: '#1E6B47', margin: 0, letterSpacing: '-0.4px'}}>Insurance Records</h1>
+                <p style={{fontSize: '12px', color: '#1E6B47', margin: 0, fontWeight: 500}}>Motor Car Insurance · View & Manage Records</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Toast notification */}
       {toast && (
         <Toast 
           message={toast.message} 
@@ -1272,7 +1340,7 @@ const Records = () => {
                   whiteSpace: "nowrap"
                 }}
               >
-                🔍 Search
+              Search
               </button>
             </div>
           </div>
@@ -1336,6 +1404,7 @@ const Records = () => {
         </table>
       </div>
 
+      {/* Pagination controls */}
       <div style={{ 
         display: "flex", 
         justifyContent: "space-between", 
@@ -1439,6 +1508,7 @@ const Records = () => {
         </div>
       </div>
 
+      {/* Modals */}
       {modalOpen && modalType === "view" && (
         <ViewModal 
           selectedUser={selectedUser}
@@ -1461,7 +1531,7 @@ const Records = () => {
       {modalOpen && modalType === "edit" && (
         <EditModal 
           editData={editData}
-          onEditChange={setEditData}
+          onEditChange={handleEditChange}
           onSave={handleSaveEdit}
           onCancel={closeModal}
           premiumModalBackdrop={premiumModalBackdrop}
@@ -1492,41 +1562,41 @@ const Records = () => {
             </div>
 
             <div style={premiumModalBody}>
-              <div style={{ textAlign: "center", padding: "30px 20px" }}>
+              <div style={{ textAlign: "center", padding: "20px 16px" }}>
                 <div style={{
                   ...iconBadge,
                   backgroundColor: "#fee2e2",
                   color: "#dc2626",
-                  margin: "0 auto 24px"
+                  margin: "0 auto 16px"
                 }}
                 className="icon-badge-pulse">
-                  <FiTrash2 size={28} />
+                  <FiTrash2 size={24} />
                 </div>
                 <h4 style={{ 
-                  fontSize: "22px", 
+                  fontSize: "18px", 
                   fontWeight: "700", 
                   color: "#111827",
-                  marginBottom: "16px" 
+                  marginBottom: "10px" 
                 }}>
                   Confirm Deletion
                 </h4>
                 <p style={{ 
-                  fontSize: "16px",
+                  fontSize: "0.9em",
                   color: "#6b7280", 
-                  marginBottom: "12px",
-                  lineHeight: "1.7"
+                  marginBottom: "8px",
+                  lineHeight: "1.5"
                 }}>
                   You are about to permanently delete the record for
                 </p>
                 <div style={{
-                  padding: "16px 24px",
+                  padding: "12px 16px",
                   backgroundColor: "#f9fafb",
-                  borderRadius: "12px",
-                  margin: "16px 0",
-                  border: "2px solid #e5e7eb"
+                  borderRadius: "8px",
+                  margin: "12px 0",
+                  border: "1px solid #e5e7eb"
                 }}>
                   <p style={{
-                    fontSize: "18px",
+                    fontSize: "15px",
                     fontWeight: "700",
                     color: "#111827",
                     margin: 0
@@ -1538,14 +1608,14 @@ const Records = () => {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  gap: "8px",
-                  padding: "12px 20px",
+                  gap: "6px",
+                  padding: "10px 14px",
                   backgroundColor: "#fef3c7",
                   border: "1px solid #fbbf24",
-                  borderRadius: "10px",
-                  marginTop: "20px"
+                  borderRadius: "8px",
+                  marginTop: "14px"
                 }}>
-                  <FiAlertCircle size={18} color="#92400e" />
+                  <FiAlertCircle size={16} color="#92400e" />
                   <p style={{ 
                     fontSize: "13px",
                     color: "#92400e",

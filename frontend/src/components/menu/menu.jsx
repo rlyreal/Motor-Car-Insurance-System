@@ -158,6 +158,7 @@ function Menu() {
   };
 
   const handleBack = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     navigate('/records');
   };
 
@@ -172,7 +173,7 @@ function Menu() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep === 1 && isQuickReferenceComplete()) {
       setCurrentStep(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -180,41 +181,73 @@ function Menu() {
       setCurrentStep(3);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (currentStep === 3) {
+      // Prevent multiple submissions
+      if (isSubmitting) return;
+      
       setIsSubmitting(true);
       
-      setTimeout(() => {
-        try {
-          // Save submitted record to localStorage
-          const submittedRecords = JSON.parse(localStorage.getItem('submittedRecords')) || [];
-          const newRecord = {
-            id: Date.now(),
-            name: formData.assured,
-            pn: formData.policyNumber,
-            cuc: formData.cocNumber,
-            or: formData.orNumber,
-            plate: formData.plateNo,
-            ...formData // Include all form data for detailed view
-          };
-          submittedRecords.push(newRecord);
-          localStorage.setItem('submittedRecords', JSON.stringify(submittedRecords));
-          
-          console.log('Form submitted:', formData);
+      try {
+        const policyData = {
+          assured: formData.assured,
+          address: formData.address,
+          cocNumber: formData.cocNumber,
+          orNumber: formData.orNumber,
+          policyNumber: formData.policyNumber,
+          cType: formData.cType,
+          year: parseInt(formData.year),
+          dateIssued: formData.dateIssued,
+          dateReceived: formData.dateReceived,
+          insuranceFromDate: formData.insuranceFromDate,
+          insuranceToDate: formData.insuranceToDate,
+          model: formData.model,
+          make: formData.make,
+          bodyType: formData.bodyType,
+          color: formData.color,
+          mvFileNo: formData.mvFileNo,
+          plateNo: formData.plateNo,
+          serialChassisNo: formData.serialChassisNo,
+          motorNo: formData.motorNo,
+          premium: parseFloat(ratesData.premium) || 0,
+          otherCharges: parseFloat(ratesData.otherCharges) || 0,
+          authFee: 50.40
+        };
+
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/policies`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(policyData)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          console.log('Policy saved to database:', result);
           setIsSubmitting(false);
           showToast('Form submitted successfully!', 'success');
           
-          // Clear form data after successful submission
+          // Clear localStorage
           localStorage.removeItem('menuFormData');
           localStorage.removeItem('menuCurrentStep');
           localStorage.removeItem('menuRatesData');
           
+          // Redirect after 2 seconds
           setTimeout(() => {
             navigate('/records');
           }, 2000);
-        } catch (error) {
-          setIsSubmitting(false);
-          showToast('Error submitting form. Please try again.', 'error');
+        } else {
+          throw new Error(result.message);
         }
-      }, 1500);
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        setIsSubmitting(false);
+        showToast('Error submitting form. Please try again.', 'error');
+      }
     }
   };
 
@@ -375,8 +408,8 @@ function Menu() {
       )}
       
       {/* Modern Nav-style Header */}
-<div className="nav-header-container" style={{maxWidth: '100%', margin: '0', padding: '0', width: '100%'}}>
-        <div className="nav-header" style={{background: '#fff', borderRadius: '0px', padding: '12px 20px', boxShadow: '0 8px 24px rgba(45, 80, 22, 0.12)', border: 'none', position: 'relative', overflow: 'visible'}}>
+<div className="nav-header-container" style={{position: 'fixed', top: 0, left: 0, right: 0, maxWidth: '100%', margin: '0', padding: '0', width: '100%', zIndex: 999, boxShadow: '0 8px 24px rgba(45, 80, 22, 0.12)'}}>
+        <div className="nav-header" style={{background: '#fff', borderRadius: '2px', padding: '12px 20px', boxShadow: '0 8px 24px rgba(45, 80, 22, 0.12)', border: 'none', position: 'relative', overflow: 'visible'}}>
           <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', position: 'relative', zIndex: 1}}>
             {/* Left: logo + title */}
             <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
@@ -395,7 +428,7 @@ function Menu() {
       </div>
 
       {/* Timeline Progress Indicator - Enhanced Full Width */}
-      <div style={{width: '95%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '16px', paddingBottom: '16px', marginBottom: '26px', marginTop: '26px'}} role="progressbar" aria-valuenow={currentStep} aria-valuemin={1} aria-valuemax={3} aria-label={`Step ${currentStep} of 3`}>
+      <div style={{width: '95%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '16px', paddingBottom: '16px', marginBottom: '26px', marginTop: '135px'}} role="progressbar" aria-valuenow={currentStep} aria-valuemin={1} aria-valuemax={3} aria-label={`Step ${currentStep} of 3`}>
         <div style={{maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'center', alignItems: 'center', paddingX: '16px'}}>
           <div style={{display: 'flex', alignItems: 'center', gap: '0', position: 'relative', width: '100%', maxWidth: '1000px'}}>
             {[{label: 'Info', step: 1}, {label: 'Rates', step: 2}, {label: 'Review', step: 3}].map((step, idx) => (
@@ -530,117 +563,125 @@ function Menu() {
               padding: '20px', 
               boxShadow: '0 2px 8px rgba(45, 80, 22, 0.08)', 
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
-              border: '2px solid #5A8C3A'
+              border: '1px solid rgba(90, 140, 58, 0.2)'
             }} onMouseEnter={(e) => {
               e.currentTarget.style.boxShadow = '0 6px 16px rgba(45, 80, 22, 0.12)';
-              e.currentTarget.style.borderColor = '#2D5016';
+              e.currentTarget.style.borderColor = 'rgba(90, 140, 58, 0.3)';
             }} onMouseLeave={(e) => {
               e.currentTarget.style.boxShadow = '0 2px 8px rgba(45, 80, 22, 0.08)';
-              e.currentTarget.style.borderColor = '#5A8C3A';
+              e.currentTarget.style.borderColor = 'rgba(90, 140, 58, 0.2)';
             }}>
-              <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px'}}>
-                <div style={{width: '5px', height: '28px', backgroundColor: '#2D5016', borderRadius: '3px'}}></div>
-                <h3 style={{fontSize: '14px', fontWeight: '800', color: '#2D5016', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px'}}>Quick Reference</h3>
-              </div>
-              
-              {/* Completion Tracking */}
-              <div style={{marginBottom: '16px', paddingBottom: '16px', borderBottom: '2px solid #5A8C3A', display: 'flex', alignItems: 'center', justifyContent: 'flex-end'}} aria-live="polite" aria-label={`Quick Reference completion status: ${completionPercentage === 100 ? 'Complete' : 'Incomplete'}`}>
-                <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-                  <div style={{width: '24px', height: '24px', borderRadius: '50%', backgroundColor: completionPercentage === 100 ? '#1a5f3f' : '#e5e7eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700'}} aria-hidden="true">
-                    {completionPercentage === 100 ? '✓' : '○'}
+              <div style={{
+                marginBottom: '10px', 
+                padding: '15px', 
+                background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)',
+                borderRadius: '10px', 
+                border: '1px solid rgba(90, 140, 58, 0.2)'
+              }}>
+                <div style={{display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px'}}>
+                  <div style={{width: '5px', height: '28px', backgroundColor: '#2D5016', borderRadius: '3px'}}></div>
+                  <h3 style={{fontSize: '14px', fontWeight: '800', color: '#2D5016', margin: 0, textTransform: 'uppercase', letterSpacing: '0.5px'}}>Quick Reference</h3>
+                </div>
+                
+                {/* Completion Tracking */}
+                <div style={{marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end'}} aria-live="polite" aria-label={`Quick Reference completion status: ${completionPercentage === 100 ? 'Complete' : 'Incomplete'}`}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                    <div style={{width: '24px', height: '24px', borderRadius: '50%', backgroundColor: completionPercentage === 100 ? '#1a5f3f' : '#e5e7eb', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: '700'}} aria-hidden="true">
+                      {completionPercentage === 100 ? '✓' : '○'}
+                    </div>
+                    <span style={{fontSize: '12px', color: completionPercentage === 100 ? '#1a5f3f' : '#d1d5db', fontWeight: '600'}}>
+                      {completionPercentage === 100 ? 'Complete' : 'Incomplete'}
+                    </span>
                   </div>
-                  <span style={{fontSize: '12px', color: completionPercentage === 100 ? '#1a5f3f' : '#d1d5db', fontWeight: '600'}}>
-                    {completionPercentage === 100 ? 'Complete' : 'Incomplete'}
-                  </span>
                 </div>
-              </div>
-              
-              <div style={{marginBottom: '16px'}}>
-                <label htmlFor="assured-input" style={{fontSize: '11px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px'}}>Assured <span style={{color: '#ef4444'}}>*</span></label>
-                <input 
-                  id="assured-input"
-                  type="text" 
-                  name="assured"
-                  value={formData.assured}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="Enter assured name"
-                  aria-label="Assured name - required"
-                  aria-required="true"
-                  onFocus={(e) => {
-                    e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
-                    e.target.style.backgroundColor = '#f8fdf9';
-                  }}
-                  style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: (touched.assured && !formData.assured) ? '#ef4444' : inputBaseStyle.borderColor}}
-                />
-              </div>
-
-              <div style={{marginBottom: '16px'}}>
-                <label htmlFor="address-input" style={{fontSize: '11px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px'}}>Address <span style={{color: '#ef4444'}}>*</span></label>
-                <input 
-                  id="address-input"
-                  type="text" 
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  placeholder="Enter address"
-                  aria-label="Address - required"
-                  aria-required="true"
-                  onFocus={(e) => {
-                    e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
-                    e.target.style.backgroundColor = '#f8fdf9';
-                  }}
-                  style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: (touched.address && !formData.address) ? '#ef4444' : inputBaseStyle.borderColor}}
-                />
-              </div>
-
-              <div style={{display: 'flex', gap: '12px'}}>
-                <div style={{flex: 1}}>
-                  <label htmlFor="coc-number-input" style={{fontSize: '11px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px'}}>COC Number <span style={{color: '#ef4444'}}>*</span></label>
+                
+                <div style={{marginBottom: '16px'}}>
+                  <label htmlFor="assured-input" style={{fontSize: '11px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px'}}>Assured <span style={{color: '#ef4444'}}>*</span></label>
                   <input 
-                    id="coc-number-input"
+                    id="assured-input"
                     type="text" 
-                    name="cocNumber"
-                    value={formData.cocNumber}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/[^0-9]/g, '');
-                      setFormData(prev => ({ ...prev, cocNumber: value }));
-                    }}
+                    name="assured"
+                    value={formData.assured}
+                    onChange={handleChange}
                     onBlur={handleBlur}
-                    placeholder="Enter COC no."
-                    aria-label="COC Number - numbers only - required"
+                    placeholder="Enter assured name"
+                    aria-label="Assured name - required"
                     aria-required="true"
-                    inputMode="numeric"
                     onFocus={(e) => {
                       e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                       e.target.style.backgroundColor = '#f8fdf9';
                     }}
-                    style={{...inputBaseStyle, borderColor: (touched.cocNumber && !formData.cocNumber) ? '#ef4444' : inputBaseStyle.borderColor}}
+                    style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: (touched.assured && !formData.assured) ? '#ef4444' : inputBaseStyle.borderColor}}
                   />
                 </div>
 
-                <div style={{flex: 1}}>
-                  <label htmlFor="or-number-input" style={{fontSize: '11px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px'}}>OR Number <span style={{color: '#ef4444'}}>*</span></label>
+                <div style={{marginBottom: '16px'}}>
+                  <label htmlFor="address-input" style={{fontSize: '11px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px'}}>Address <span style={{color: '#ef4444'}}>*</span></label>
                   <input 
-                    id="or-number-input"
+                    id="address-input"
                     type="text" 
-                    name="orNumber"
-                    value={formData.orNumber}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/[^0-9]/g, '');
-                      setFormData(prev => ({ ...prev, orNumber: value }));
-                    }}
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
                     onBlur={handleBlur}
-                    placeholder="Enter OR no."
-                    aria-label="OR Number - numbers only"
-                    inputMode="numeric"
+                    placeholder="Enter address"
+                    aria-label="Address - required"
+                    aria-required="true"
                     onFocus={(e) => {
                       e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
                       e.target.style.backgroundColor = '#f8fdf9';
                     }}
-                    style={{...inputBaseStyle, borderColor: (touched.orNumber && !formData.orNumber) ? '#ef4444' : inputBaseStyle.borderColor}}
+                    style={{...inputBaseStyle, textTransform: 'uppercase', borderColor: (touched.address && !formData.address) ? '#ef4444' : inputBaseStyle.borderColor}}
                   />
+                </div>
+
+                <div style={{display: 'flex', gap: '12px'}}>
+                  <div style={{flex: 1}}>
+                    <label htmlFor="coc-number-input" style={{fontSize: '11px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px'}}>COC Number <span style={{color: '#ef4444'}}>*</span></label>
+                    <input 
+                      id="coc-number-input"
+                      type="text" 
+                      name="cocNumber"
+                      value={formData.cocNumber}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9]/g, '');
+                        setFormData(prev => ({ ...prev, cocNumber: value }));
+                      }}
+                      onBlur={handleBlur}
+                      placeholder="Enter COC no."
+                      aria-label="COC Number - numbers only - required"
+                      aria-required="true"
+                      inputMode="numeric"
+                      onFocus={(e) => {
+                        e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
+                        e.target.style.backgroundColor = '#f8fdf9';
+                      }}
+                      style={{...inputBaseStyle, borderColor: (touched.cocNumber && !formData.cocNumber) ? '#ef4444' : inputBaseStyle.borderColor}}
+                    />
+                  </div>
+
+                  <div style={{flex: 1}}>
+                    <label htmlFor="or-number-input" style={{fontSize: '11px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.3px'}}>OR Number <span style={{color: '#ef4444'}}>*</span></label>
+                    <input 
+                      id="or-number-input"
+                      type="text" 
+                      name="orNumber"
+                      value={formData.orNumber}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9]/g, '');
+                        setFormData(prev => ({ ...prev, orNumber: value }));
+                      }}
+                      onBlur={handleBlur}
+                      placeholder="Enter OR no."
+                      aria-label="OR Number - numbers only"
+                      inputMode="numeric"
+                      onFocus={(e) => {
+                        e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
+                        e.target.style.backgroundColor = '#f8fdf9';
+                      }}
+                      style={{...inputBaseStyle, borderColor: (touched.orNumber && !formData.orNumber) ? '#ef4444' : inputBaseStyle.borderColor}}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -741,15 +782,85 @@ function Menu() {
                     </div>
                     <div>
                       <label htmlFor="year-select" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Year <span style={{color: '#ef4444'}}>*</span></label>
-                      <select id="year-select" name="year" value={formData.year} onChange={handleChange} onBlur={handleBlur} aria-label="Policy year" onFocus={(e) => {
-                        e.target.style.boxShadow = '0 0 0 3px rgba(26, 95, 63, 0.12)';
-                        e.target.style.backgroundColor = '#f8fdf9';
-                      }} style={{...inputBaseStyle, borderColor: (touched.year && !formData.year) ? '#ef4444' : inputBaseStyle.borderColor}}>
-                        <option>Select</option>
-                        <option>2026</option>
-                        <option>2025</option>
-                        <option>2024</option>
-                      </select>
+                      <div style={{position: 'relative', display: 'inline-block', width: '100%'}}>
+                        <input 
+                          id="year-select"
+                          type="text"
+                          readOnly
+                          value={formData.year || 'Select'}
+                          placeholder="Select"
+                          onClick={(e) => {
+                            const picker = e.currentTarget.nextElementSibling;
+                            if (picker) picker.style.display = picker.style.display === 'none' ? 'block' : 'none';
+                          }}
+                          style={{...inputBaseStyle, borderColor: (touched.year && !formData.year) ? '#ef4444' : inputBaseStyle.borderColor, cursor: 'pointer'}}
+                          aria-label="Policy year"
+                        />
+                        <div style={{
+                          position: 'absolute',
+                          top: '100%',
+                          left: 0,
+                          right: 0,
+                          display: 'none',
+                          backgroundColor: 'white',
+                          border: '1px solid #d1d5db',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                          zIndex: 1000,
+                          padding: '16px',
+                          marginTop: '4px',
+                          minWidth: '280px',
+                          maxHeight: '400px',
+                          overflowY: 'auto'
+                        }}
+                        onClick={(e) => e.stopPropagation()}>
+                          <div style={{textAlign: 'center', marginBottom: '12px', fontWeight: '700', color: '#1a1a1a'}}>
+                            Select Year
+                          </div>
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(4, 1fr)',
+                            gap: '8px'
+                          }}>
+                            {Array.from({ length: 125 }, (_, i) => 2050 - i).map((year) => (
+                              <button
+                                key={year}
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setFormData(prev => ({ ...prev, year: year.toString() }));
+                                  const picker = e.currentTarget.closest('[style*="position: absolute"]');
+                                  if (picker) picker.style.display = 'none';
+                                }}
+                                style={{
+                                  padding: '10px 8px',
+                                  border: formData.year === year.toString() ? '2px solid #5A8C3A' : '1px solid #e5e7eb',
+                                  borderRadius: '6px',
+                                  backgroundColor: formData.year === year.toString() ? '#e8f5e9' : 'white',
+                                  color: formData.year === year.toString() ? '#2D5016' : '#6b7280',
+                                  fontWeight: formData.year === year.toString() ? '700' : '500',
+                                  cursor: 'pointer',
+                                  fontSize: '13px',
+                                  transition: 'all 0.2s'
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (formData.year !== year.toString()) {
+                                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                                    e.currentTarget.style.borderColor = '#5A8C3A';
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (formData.year !== year.toString()) {
+                                    e.currentTarget.style.backgroundColor = 'white';
+                                    e.currentTarget.style.borderColor = '#e5e7eb';
+                                  }
+                                }}>
+                                {year}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <div>
                       <label htmlFor="date-issued-input" style={{fontSize: '12px', fontWeight: '800', color: '#1a1a1a', display: 'block', marginBottom: '8px'}}>Issued <span style={{color: '#ef4444'}}>*</span></label>

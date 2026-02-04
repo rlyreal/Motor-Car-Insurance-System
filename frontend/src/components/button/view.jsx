@@ -46,7 +46,7 @@ const ViewModal = ({ selectedUser, onClose, premiumModalBackdrop, premiumModal, 
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                📍 Address
+                 Address
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.address || "N/A"}</div>
             </div>
@@ -87,7 +87,7 @@ const ViewModal = ({ selectedUser, onClose, premiumModalBackdrop, premiumModal, 
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                📅 Year
+                 Year
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.year || "N/A"}</div>
             </div>
@@ -104,28 +104,28 @@ const ViewModal = ({ selectedUser, onClose, premiumModalBackdrop, premiumModal, 
           <div style={twoColumnContainer}>
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                📅 From Date
+                 From Date
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.fromDate || "N/A"}</div>
             </div>
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                📅 To Date
+                 To Date
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.toDate || "N/A"}</div>
             </div>
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                ✓ Issued Date
+                 Issued Date
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.issued || "N/A"}</div>
             </div>
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                ✓ Received Date
+                 Received Date
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.received || "N/A"}</div>
             </div>
@@ -142,56 +142,56 @@ const ViewModal = ({ selectedUser, onClose, premiumModalBackdrop, premiumModal, 
           <div style={twoColumnContainer}>
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                🏭 Make
+                 Make
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.make || "N/A"}</div>
             </div>
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                🔧 Model
+                 Model
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.model || "N/A"}</div>
             </div>
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                🎨 Body Type
+                 Body Type
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.bodyType || "N/A"}</div>
             </div>
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                🎨 Color
+                 Color
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.color || "N/A"}</div>
             </div>
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                🚗 Plate Number
+                 Plate Number
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.plateNo || selectedUser.plate || "N/A"}</div>
             </div>
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                🔐 Chassis Number
+                 Chassis Number
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.chassisNo || "N/A"}</div>
             </div>
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                ⚙️ Motor Number
+                 Motor Number
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.motorNo || "N/A"}</div>
             </div>
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                📋 MV File Number
+                 MV File Number
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.mvFileNo || "N/A"}</div>
             </div>
@@ -208,14 +208,14 @@ const ViewModal = ({ selectedUser, onClose, premiumModalBackdrop, premiumModal, 
           <div style={twoColumnContainer}>
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                💰 Premium
+                 Premium
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.premium || "₱0"}</div>
             </div>
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                💵 Other Charges
+                 Other Charges
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.otherCharges || "₱0"}</div>
             </div>
@@ -232,28 +232,28 @@ const ViewModal = ({ selectedUser, onClose, premiumModalBackdrop, premiumModal, 
           <div style={twoColumnContainer}>
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                📄 Doc. Stamps (12.5%)
+                 Doc. Stamps (12.5%)
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.docStamps || "₱0"}</div>
             </div>
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                📊 E-VAT (12%)
+                 E-VAT (12%)
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.eVat || "₱0"}</div>
             </div>
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                🏛️ Local Govt Tax (0.5%)
+                 Local Govt Tax (0.5%)
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.localGovtTax || "₱0"}</div>
             </div>
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                ✓ Auth. Fee (Fixed)
+                 Auth. Fee (Fixed)
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.authFee || "₱0"}</div>
             </div>
@@ -269,7 +269,7 @@ const ViewModal = ({ selectedUser, onClose, premiumModalBackdrop, premiumModal, 
 
           <div style={{marginBottom: "0"}}>
             <label style={fieldLabel}>
-              💰 Grand Total
+               Grand Total
             </label>
             <div style={{...fieldValue, backgroundColor: "#f0fdf4", borderColor: "#22c55e", fontWeight: "700", fontSize: "18px", color: "#15803d"}} className="field-value-hover">{selectedUser.grandTotal || "₱0"}</div>
           </div>
