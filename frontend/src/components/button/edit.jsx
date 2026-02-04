@@ -52,7 +52,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                📍 Address
+                 Address
               </label>
               <input 
                 style={premiumInput}
@@ -140,7 +140,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
           <div style={twoColumnContainer}>
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                📅 From Date
+                 From Date
               </label>
               <input 
                 style={premiumInput}
@@ -153,7 +153,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                📅 To Date
+                 To Date
               </label>
               <input 
                 style={premiumInput}
@@ -166,7 +166,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                ✓ Issued Date
+                 Issued Date
               </label>
               <input 
                 style={premiumInput}
@@ -179,7 +179,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                ✓ Received Date
+                 Received Date
               </label>
               <input 
                 style={premiumInput}
@@ -202,7 +202,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
           <div style={twoColumnContainer}>
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                🏭 Make
+                 Make
               </label>
               <input 
                 style={premiumInput}
@@ -215,7 +215,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                🔧 Model
+                 Model
               </label>
               <input 
                 style={premiumInput}
@@ -228,7 +228,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                🎨 Body Type
+                 Body Type
               </label>
               <input 
                 style={premiumInput}
@@ -241,7 +241,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                🎨 Color
+                 Color
               </label>
               <input 
                 style={premiumInput}
@@ -254,7 +254,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                🚗 Plate Number
+                 Plate Number
               </label>
               <input 
                 style={premiumInput}
@@ -267,7 +267,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                🔐 Chassis Number
+                 Chassis Number
               </label>
               <input 
                 style={premiumInput}
@@ -280,7 +280,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                ⚙️ Motor Number
+                 Motor Number
               </label>
               <input 
                 style={premiumInput}
@@ -293,7 +293,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                📋 MV File Number
+                 MV File Number
               </label>
               <input 
                 style={premiumInput}
@@ -316,7 +316,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
           <div style={twoColumnContainer}>
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                💰 Premium
+                 Premium
               </label>
               <input 
                 style={premiumInput}
@@ -335,7 +335,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                💵 Other Charges
+                 Other Charges
               </label>
               <input 
                 style={premiumInput}
@@ -364,7 +364,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
           <div style={twoColumnContainer}>
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                📄 Doc. Stamps (12.5%)
+                 Doc. Stamps (12.5%)
               </label>
               <input 
                 style={{...premiumInput, backgroundColor: "#f3f4f6", cursor: "not-allowed"}}
@@ -376,7 +376,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                📊 E-VAT (12%)
+                 E-VAT (12%)
               </label>
               <input 
                 style={{...premiumInput, backgroundColor: "#f3f4f6", cursor: "not-allowed"}}
@@ -388,7 +388,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                🏛️ Local Govt Tax (0.5%)
+                 Local Govt Tax (0.5%)
               </label>
               <input 
                 style={{...premiumInput, backgroundColor: "#f3f4f6", cursor: "not-allowed"}}
@@ -400,7 +400,7 @@ const EditModal = ({ editData, onEditChange, onSave, onCancel, premiumModalBackd
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
-                ✓ Auth. Fee (Fixed)
+                 Auth. Fee (Fixed)
               </label>
               <input 
                 style={{...premiumInput, backgroundColor: "#f3f4f6", cursor: "not-allowed"}}
