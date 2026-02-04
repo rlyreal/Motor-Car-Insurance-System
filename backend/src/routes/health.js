@@ -1,10 +1,8 @@
-
+// backend/src/routes/health.js
 import express from 'express';
-
 const router = express.Router();
 
-// Add your routes here
-router.get('/api/health', (req, res) => {
+router.get('/health', (req, res) => {
   res.json({ status: 'OK' });
 });
 
