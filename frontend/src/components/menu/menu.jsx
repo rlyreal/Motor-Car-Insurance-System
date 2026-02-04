@@ -158,6 +158,7 @@ function Menu() {
   };
 
   const handleBack = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     navigate('/records');
   };
 
@@ -172,7 +173,7 @@ function Menu() {
     setTimeout(() => setToast(null), 4000);
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep === 1 && isQuickReferenceComplete()) {
       setCurrentStep(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -180,41 +181,73 @@ function Menu() {
       setCurrentStep(3);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (currentStep === 3) {
+      // Prevent multiple submissions
+      if (isSubmitting) return;
+      
       setIsSubmitting(true);
       
-      setTimeout(() => {
-        try {
-          // Save submitted record to localStorage
-          const submittedRecords = JSON.parse(localStorage.getItem('submittedRecords')) || [];
-          const newRecord = {
-            id: Date.now(),
-            name: formData.assured,
-            pn: formData.policyNumber,
-            cuc: formData.cocNumber,
-            or: formData.orNumber,
-            plate: formData.plateNo,
-            ...formData // Include all form data for detailed view
-          };
-          submittedRecords.push(newRecord);
-          localStorage.setItem('submittedRecords', JSON.stringify(submittedRecords));
-          
-          console.log('Form submitted:', formData);
+      try {
+        const policyData = {
+          assured: formData.assured,
+          address: formData.address,
+          cocNumber: formData.cocNumber,
+          orNumber: formData.orNumber,
+          policyNumber: formData.policyNumber,
+          cType: formData.cType,
+          year: parseInt(formData.year),
+          dateIssued: formData.dateIssued,
+          dateReceived: formData.dateReceived,
+          insuranceFromDate: formData.insuranceFromDate,
+          insuranceToDate: formData.insuranceToDate,
+          model: formData.model,
+          make: formData.make,
+          bodyType: formData.bodyType,
+          color: formData.color,
+          mvFileNo: formData.mvFileNo,
+          plateNo: formData.plateNo,
+          serialChassisNo: formData.serialChassisNo,
+          motorNo: formData.motorNo,
+          premium: parseFloat(ratesData.premium) || 0,
+          otherCharges: parseFloat(ratesData.otherCharges) || 0,
+          authFee: 50.40
+        };
+
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/policies`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(policyData)
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+          console.log('Policy saved to database:', result);
           setIsSubmitting(false);
           showToast('Form submitted successfully!', 'success');
           
-          // Clear form data after successful submission
+          // Clear localStorage
           localStorage.removeItem('menuFormData');
           localStorage.removeItem('menuCurrentStep');
           localStorage.removeItem('menuRatesData');
           
+          // Redirect after 2 seconds
           setTimeout(() => {
             navigate('/records');
           }, 2000);
-        } catch (error) {
-          setIsSubmitting(false);
-          showToast('Error submitting form. Please try again.', 'error');
+        } else {
+          throw new Error(result.message);
         }
-      }, 1500);
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        setIsSubmitting(false);
+        showToast('Error submitting form. Please try again.', 'error');
+      }
     }
   };
 
@@ -375,8 +408,8 @@ function Menu() {
       )}
       
       {/* Modern Nav-style Header */}
-<div className="nav-header-container" style={{maxWidth: '100%', margin: '0', padding: '0', width: '100%'}}>
-        <div className="nav-header" style={{background: '#fff', borderRadius: '0px', padding: '12px 20px', boxShadow: '0 8px 24px rgba(45, 80, 22, 0.12)', border: 'none', position: 'relative', overflow: 'visible'}}>
+<div className="nav-header-container" style={{position: 'fixed', top: 0, left: 0, right: 0, maxWidth: '100%', margin: '0', padding: '0', width: '100%', zIndex: 999, boxShadow: '0 8px 24px rgba(45, 80, 22, 0.12)'}}>
+        <div className="nav-header" style={{background: '#fff', borderRadius: '2px', padding: '12px 20px', boxShadow: '0 8px 24px rgba(45, 80, 22, 0.12)', border: 'none', position: 'relative', overflow: 'visible'}}>
           <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', position: 'relative', zIndex: 1}}>
             {/* Left: logo + title */}
             <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
@@ -395,7 +428,7 @@ function Menu() {
       </div>
 
       {/* Timeline Progress Indicator - Enhanced Full Width */}
-      <div style={{width: '95%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '16px', paddingBottom: '16px', marginBottom: '26px', marginTop: '26px'}} role="progressbar" aria-valuenow={currentStep} aria-valuemin={1} aria-valuemax={3} aria-label={`Step ${currentStep} of 3`}>
+      <div style={{width: '95%', marginLeft: 'auto', marginRight: 'auto', paddingTop: '16px', paddingBottom: '16px', marginBottom: '26px', marginTop: '135px'}} role="progressbar" aria-valuenow={currentStep} aria-valuemin={1} aria-valuemax={3} aria-label={`Step ${currentStep} of 3`}>
         <div style={{maxWidth: '1400px', margin: '0 auto', display: 'flex', justifyContent: 'center', alignItems: 'center', paddingX: '16px'}}>
           <div style={{display: 'flex', alignItems: 'center', gap: '0', position: 'relative', width: '100%', maxWidth: '1000px'}}>
             {[{label: 'Info', step: 1}, {label: 'Rates', step: 2}, {label: 'Review', step: 3}].map((step, idx) => (
