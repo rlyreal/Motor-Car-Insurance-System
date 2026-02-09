@@ -10,10 +10,23 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS
+// CORS - Allow all IPs on local network (192.168.1.x)
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:5000', 'http://192.168.1.42:5000'],
-  methods: ['GET','POST','PUT','DELETE'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (Postman, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Allow localhost
+    if (origin.includes('localhost')) return callback(null, true);
+    
+    // Allow any IP on 192.168.1.x network on port 3000
+    if (/^http:\/\/192\.168\.1\.\d+:3000$/.test(origin)) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
 
@@ -27,5 +40,6 @@ app.use('/api', healthRoutes);
 app.get('/', (req, res) => res.json({ message: 'Motor Insurance API running' }));
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://0.0.0.0:${PORT}`);
+  console.log(`Accessible on network at http://192.168.1.28:${PORT}`);
 });

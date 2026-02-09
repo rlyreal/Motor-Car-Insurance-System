@@ -3,6 +3,39 @@ import pool from '../config/database.js';
 
 const router = express.Router();
 
+// Helper function to format dates as YYYY-MM-DD to avoid timezone issues
+const formatDateFields = (rows) => {
+  return rows.map(row => ({
+    ...row,
+    date_issued: row.date_issued ? formatDate(row.date_issued) : null,
+    date_received: row.date_received ? formatDate(row.date_received) : null,
+    insurance_from_date: row.insurance_from_date ? formatDate(row.insurance_from_date) : null,
+    insurance_to_date: row.insurance_to_date ? formatDate(row.insurance_to_date) : null,
+    created_at: row.created_at ? new Date(row.created_at).toISOString() : null,
+    updated_at: row.updated_at ? new Date(row.updated_at).toISOString() : null
+  }));
+};
+
+// Helper to format Date to YYYY-MM-DD string
+const formatDate = (dateValue) => {
+  if (!dateValue) return null;
+  
+  // If it's already a string in YYYY-MM-DD format, return it
+  if (typeof dateValue === 'string' && dateValue.match(/^\d{4}-\d{2}-\d{2}/)) {
+    return dateValue.substring(0, 10);
+  }
+  
+  // If it's a Date object
+  if (dateValue instanceof Date) {
+    const year = dateValue.getFullYear();
+    const month = String(dateValue.getMonth() + 1).padStart(2, '0');
+    const day = String(dateValue.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+  
+  return null;
+};
+
 router.post('/', async (req, res) => {
   try {
     const {
@@ -36,7 +69,7 @@ router.post('/', async (req, res) => {
         policy_year, date_issued, date_received, insurance_from_date, insurance_to_date,
         model, make, body_type, color, mv_file_no, plate_no, chassis_no, motor_no,
         premium, other_charges, auth_fee, doc_stamps, e_vat, lgt, total_premium
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         assured, address, coc_number, or_number, policy_number, policy_type,
         policy_year, date_issued, date_received, insurance_from_date, insurance_to_date,
@@ -60,15 +93,15 @@ router.post('/', async (req, res) => {
   }
 });
 
-// READ - Get all policies
+// READ - Get all policies (excluding soft-deleted)
 router.get('/', async (req, res) => {
   try {
     const [rows] = await pool.query(
-      `SELECT * FROM insurance_policies WHERE is_deleted = FALSE ORDER BY created_at DESC`
+      `SELECT * FROM insurance_policies WHERE is_deleted = FALSE ORDER BY id DESC`
     );
     res.json({
       success: true,
-      data: rows
+      data: formatDateFields(rows)
     });
   } catch (error) {
     console.error('Error fetching policies:', error);
@@ -83,7 +116,7 @@ router.get('/', async (req, res) => {
 // READ - Get single policy by ID
 router.get('/:id', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT * FROM insurance_policies WHERE id = ? AND is_deleted = FALSE ', [req.params.id]);
+    const [rows] = await pool.query('SELECT * FROM insurance_policies WHERE id = ? AND is_deleted = FALSE', [req.params.id]);
     
     if (rows.length === 0) {
       return res.status(404).json({
@@ -94,7 +127,7 @@ router.get('/:id', async (req, res) => {
 
     res.json({
       success: true,
-      data: rows[0]
+      data: formatDateFields(rows)[0]
     });
   } catch (error) {
     console.error('Error fetching policy:', error);
@@ -167,18 +200,27 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE - Delete policy
+// DELETE - Soft delete policy
 router.delete('/:id', async (req, res) => {
   try {
+    const id = req.params.id;
+    
+    if (!id || isNaN(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid policy ID'
+      });
+    }
+
     const [result] = await pool.query(
-      `UPDATE insurance_policies SET is_deleted = TRUE, deleted_at = NOW() WHERE id = ?`,
-      [req.params.id]
+      `UPDATE insurance_policies SET is_deleted = TRUE, deleted_at = NOW() WHERE id = ? AND is_deleted = FALSE`,
+      [id]
     );
 
     if (result.affectedRows === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Policy not found'
+        message: 'Policy not found or already deleted'
       });
     }
 
@@ -203,7 +245,7 @@ router.get('/deleted/list', async (req, res) => {
     );
     res.json({
       success: true,
-      data: rows
+      data: formatDateFields(rows)
     });
   } catch (error) {
     console.error('Error fetching deleted policies:', error);
