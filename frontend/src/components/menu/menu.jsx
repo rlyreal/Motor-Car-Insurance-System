@@ -190,26 +190,26 @@ function Menu() {
         const policyData = {
           assured: formData.assured,
           address: formData.address,
-          cocNumber: formData.cocNumber,
-          orNumber: formData.orNumber,
-          policyNumber: formData.policyNumber,
-          cType: formData.cType,
-          year: parseInt(formData.year),
-          dateIssued: formData.dateIssued,
-          dateReceived: formData.dateReceived,
-          insuranceFromDate: formData.insuranceFromDate,
-          insuranceToDate: formData.insuranceToDate,
+          coc_number: formData.cocNumber,
+          or_number: formData.orNumber,
+          policy_number: formData.policyNumber,
+          policy_type: formData.cType,
+          policy_year: parseInt(formData.year),
+          date_issued: formData.dateIssued,
+          date_received: formData.dateReceived,
+          insurance_from_date: formData.insuranceFromDate,
+          insurance_to_date: formData.insuranceToDate,
           model: formData.model,
           make: formData.make,
-          bodyType: formData.bodyType,
+          body_type: formData.bodyType,
           color: formData.color,
-          mvFileNo: formData.mvFileNo,
-          plateNo: formData.plateNo,
-          serialChassisNo: formData.serialChassisNo,
-          motorNo: formData.motorNo,
+          mv_file_no: formData.mvFileNo,
+          plate_no: formData.plateNo,
+          chassis_no: formData.serialChassisNo,
+          motor_no: formData.motorNo,
           premium: parseFloat(ratesData.premium) || 0,
-          otherCharges: parseFloat(ratesData.otherCharges) || 0,
-          authFee: 50.40
+          other_charges: parseFloat(ratesData.otherCharges) || 0,
+          auth_fee: 50.40
         };
 
         const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/policies`, {
@@ -304,12 +304,16 @@ function Menu() {
 
   // Check Quick Reference completion (only fields that count toward completion)
   const isQuickReferenceComplete = () => {
-    return formData.assured && formData.address && formData.cocNumber;
+    return formData.assured && formData.address && formData.cocNumber && formData.orNumber;
   };
 
   // Check section completion
   const isPolicyInfoComplete = () => {
-    return formData.policyNumber && formData.dateIssued && formData.dateReceived;
+    return formData.cType && formData.cType !== 'Select Type' && 
+           formData.policyNumber && 
+           formData.year && formData.year !== 'Select' && 
+           formData.dateIssued && 
+           formData.dateReceived;
   };
 
   const isInsurancePeriodComplete = () => {
@@ -552,7 +556,7 @@ function Menu() {
       </div>
 
       {/* Main Form Container */}
-      <div style={{maxWidth: '1400px', margin: '0 auto'}}>
+      <div style={{maxWidth: '1400px', margin: '0 auto', paddingBottom: '20px', paddingLeft: '10px', paddingRight: '10px'}}>
         <div style={{display: 'grid', gridTemplateColumns: currentStep === 2 || currentStep === 3 ? '1fr' : 'minmax(280px, 1fr) 2fr', gap: '20px'}}>
           {/* Left Sidebar - Hidden on Rates and Review Steps */}
           {currentStep !== 2 && currentStep !== 3 && (
@@ -2010,7 +2014,7 @@ function Menu() {
         </div>
 
         {/* Action Buttons */}
-        <div style={{display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '32px'}}>
+        <div style={{display: 'flex', justifyContent: 'flex-end', gap: '12px', marginBottom: '5px'}}>
           <button 
             onClick={handleBack}
             aria-label="Cancel and return to records"

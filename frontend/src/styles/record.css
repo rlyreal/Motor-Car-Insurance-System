@@ -1400,3 +1400,40 @@ input:disabled:hover {
   color: #666666 !important;
   opacity: 1 !important;
 }
+/* Logout button enhancements */
+.logout-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.6s ease;
+}
+
+.logout-btn:hover::before {
+  left: 100%;
+}
+
+.logout-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.logout-btn:hover svg {
+  transform: translateX(3px);
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.35), 0 0 0 3px rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5), 0 0 0 3px rgba(255, 255, 255, 0.3);
+  }
+}
+
+.logout-btn:focus {
+  animation: pulse-glow 2s infinite;
+  outline: none;
+}

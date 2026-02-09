@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/record.css";
-import { FiEye, FiEdit2, FiTrash2, FiDownload, FiAlertCircle } from "react-icons/fi";
+import { FiEye, FiEdit2, FiTrash2, FiDownload, FiAlertCircle, FiRotateCcw } from "react-icons/fi";
 import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
 import Toast from "../../common/toast";
 import ViewModal from "../button/view";
 import EditModal from "../button/edit";
@@ -25,6 +24,93 @@ const Records = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [editData, setEditData] = useState(null);
   const [deleteConfirmUser, setDeleteConfirmUser] = useState(null);
+
+  // Helper function to safely parse ISO date strings
+  const parseISODate = (dateString) => {
+    if (!dateString) return "";
+    
+    // Simply extract the first 10 characters (YYYY-MM-DD) regardless of format
+    const cleanDate = dateString.substring(0, 10);
+    
+    // Validate it's in YYYY-MM-DD format
+    if (cleanDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      return cleanDate;
+    }
+    
+    return "";
+  };
+
+  // Helper function to filter by date range (issued date)
+  const performDateRangeFilter = (dataToFilter, fromDate, toDate, searchTerm) => {
+    let results = [...dataToFilter];
+    
+    // First apply search filter if exists
+    if (searchTerm && searchTerm.trim() !== "") {
+      const searchLower = searchTerm.toLowerCase();
+      results = results.filter(user => {
+        const nameMatch = user.name ? String(user.name).trim().toLowerCase().startsWith(searchLower) : false;
+        const formattedPn = `${user.cType || ""}${user.cType ? "-" : ""}${user.pn || ""}${user.year ? "/" + user.year : ""}`.toLowerCase();
+        const pnMatch = formattedPn ? formattedPn.startsWith(searchLower) : false;
+        const cocMatch = user.coc ? String(user.coc).trim().toLowerCase().startsWith(searchLower) : false;
+        const orMatch = user.or ? String(user.or).trim().toLowerCase().startsWith(searchLower) : false;
+        const plateMatch = user.plate ? String(user.plate).trim().toLowerCase().startsWith(searchLower) : false;
+        return nameMatch || pnMatch || cocMatch || orMatch || plateMatch;
+      });
+    }
+    
+    // Then apply date range filter based on issued date
+    // Show records where issued date falls within the selected date range (inclusive)
+    results = results.filter(user => {
+      if (!user.issued) return false;
+      // Check if issued date is within the selected range
+      return user.issued >= fromDate && user.issued <= toDate;
+    });
+    
+    setFilteredUsers(results);
+    setIsSearchActive(true);
+    setCurrentPage(1);
+    
+    // Clear the date inputs after filtering (results will still be displayed)
+    setTimeout(() => {
+      setDateFrom("");
+      setDateTo("");
+    }, 0);
+  };
+
+  // Helper function to perform search only
+  const performSearch = (dataToSearch, searchTerm) => {
+    if (!searchTerm || searchTerm.trim() === "") {
+      setFilteredUsers([]);
+      setIsSearchActive(false);
+      setCurrentPage(1);
+      return;
+    }
+    
+    const searchLower = searchTerm.toLowerCase();
+    const results = dataToSearch.filter(user => {
+      const nameMatch = user.name ? String(user.name).trim().toLowerCase().startsWith(searchLower) : false;
+      const formattedPn = `${user.cType || ""}${user.cType ? "-" : ""}${user.pn || ""}${user.year ? "/" + user.year : ""}`.toLowerCase();
+      const pnMatch = formattedPn ? formattedPn.startsWith(searchLower) : false;
+      const cocMatch = user.coc ? String(user.coc).trim().toLowerCase().startsWith(searchLower) : false;
+      const orMatch = user.or ? String(user.or).trim().toLowerCase().startsWith(searchLower) : false;
+      const plateMatch = user.plate ? String(user.plate).trim().toLowerCase().startsWith(searchLower) : false;
+      return nameMatch || pnMatch || cocMatch || orMatch || plateMatch;
+    });
+    
+    setFilteredUsers(results);
+    setIsSearchActive(true);
+    setCurrentPage(1);
+  };
+
+  // Reset filters
+  const handleResetFilters = () => {
+    setDateFrom("");
+    setDateTo("");
+    setSearchInput("");
+    setFilteredUsers([]);
+    setIsSearchActive(false);
+    setCurrentPage(1);
+  };
 
   // Fetch policies from database on component mount
   useEffect(() => {
@@ -53,10 +139,10 @@ const Records = () => {
           orNumber: policy.or_number,
           or: policy.or_number,
           model: policy.model,
-          fromDate: policy.insurance_from_date ? policy.insurance_from_date.split('T')[0] : "",
-          toDate: policy.insurance_to_date ? policy.insurance_to_date.split('T')[0] : "",
-          issued: policy.date_issued ? policy.date_issued.split('T')[0] : "",            
-          received: policy.date_received ? policy.date_received.split('T')[0] : "",
+          fromDate: parseISODate(policy.insurance_from_date),
+          toDate: parseISODate(policy.insurance_to_date),
+          issued: parseISODate(policy.date_issued),
+          received: parseISODate(policy.date_received),
           make: policy.make,
           bodyType: policy.body_type,
           color: policy.color,
@@ -98,56 +184,42 @@ const Records = () => {
     navigate('/menu');
   };
 
-  // Search function
-  const handleSearch = () => {
-    let results = [...users];
-    const hasSearchInput = searchInput.trim() !== "";
-    const hasDateFrom = dateFrom !== "";
-    const hasDateTo = dateTo !== "";
-
-    // Filter by search input (name or plate number)
-    if (hasSearchInput) {
-      const searchTerm = searchInput.toLowerCase();
-      results = results.filter(user => 
-        user.name.toLowerCase().includes(searchTerm) || 
-        user.plate.toLowerCase().includes(searchTerm)
-      );
-    }
-
-    // Filter by date range
-    if (hasDateFrom) {
-      results = results.filter(user => {
-        if (!user.dateCreated) return true;
-        return user.dateCreated >= dateFrom;
-      });
-    }
-
-    if (hasDateTo) {
-      results = results.filter(user => {
-        if (!user.dateCreated) return true;
-        return user.dateCreated <= dateTo;
-      });
-    }
-
-    setFilteredUsers(results);
-    setIsSearchActive(true);
-    setCurrentPage(1);
-    
-    if (!hasSearchInput && !hasDateFrom && !hasDateTo) {
-      setToast({ message: 'Please enter search criteria', type: 'warning' });
-      setIsSearchActive(false);
-      return;
-    }
-
-    if (results.length === 0) {
-      setToast({ message: 'No records found matching your search criteria', type: 'error' });
-    } else if (results.length === 1) {
-      setToast({ message: 'Found 1 matching record', type: 'success' });
-    } else {
-      setToast({ message: `Found ${results.length} matching records`, type: 'success' });
-    }
+  const handleLogout = () => {
+    // Clear any stored session/auth data if applicable
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userSession');
+    localStorage.removeItem('user');
+    localStorage.removeItem('adminId');
+    // Navigate to login page
+    navigate('/');
   };
 
+  // Logout button style
+  const logoutButtonStyle = {
+    background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+    color: '#ffffff',
+    padding: '12px 16px',
+    border: 'none',
+    borderRadius: '12px',
+    fontSize: '15px',
+    fontWeight: '700',
+    cursor: 'pointer',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '0',
+    boxShadow: '0 6px 20px rgba(220, 38, 38, 0.35), 0 0 0 3px rgba(255, 255, 255, 0.2)',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    position: 'absolute',
+    top: '50%',
+    right: '20px',
+    transform: 'translateY(-50%)',
+    overflow: 'visible',
+  };
+
+  // Search function
   // items per page becomes selectable by admin (5 or 10)
   const [itemsPerPage, setItemsPerPage] = useState(5);
   const [currentPage, setCurrentPage] = useState(1);
@@ -325,10 +397,10 @@ const openEdit = (user) => {
             orNumber: policy.or_number,
             or: policy.or_number,
             model: policy.model,
-            fromDate: policy.insurance_from_date ? policy.insurance_from_date.split('T')[0] : "",
-            toDate: policy.insurance_to_date ? policy.insurance_to_date.split('T')[0] : "",
-            issued: policy.date_issued ? policy.date_issued.split('T')[0] : "",            
-            received: policy.date_received ? policy.date_received.split('T')[0] : "",
+            fromDate: parseISODate(policy.insurance_from_date),
+            toDate: parseISODate(policy.insurance_to_date),
+            issued: parseISODate(policy.date_issued),
+            received: parseISODate(policy.date_received),
             make: policy.make,
             bodyType: policy.body_type,
             color: policy.color,
@@ -400,7 +472,7 @@ const openEdit = (user) => {
     textTransform: "uppercase",
     letterSpacing: "0.5px",
     zIndex: 10,
-    boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+    boxShadow: "0 2px  rgba(0,0,0,0.15)",
     borderTop: "2px solid #165638",
     borderBottom: "2px solid #165638"
   };
@@ -427,19 +499,6 @@ const openEdit = (user) => {
     borderRadius: "20px",
     width: "95%",
     maxWidth: "1000px",
-    maxHeight: "95vh",
-    overflow: "hidden",
-    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.05)",
-    animation: "slideUpScale 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)",
-    display: "flex",
-    flexDirection: "column"
-  };
-
-  const deleteModal = {
-    backgroundColor: "#ffffff",
-    borderRadius: "20px",
-    width: "95%",
-    maxWidth: "550px",
     maxHeight: "95vh",
     overflow: "hidden",
     boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.05)",
@@ -598,7 +657,7 @@ const openEdit = (user) => {
     const tableData = users.map(user => ({
       "Assured Name": user.name,
       "Address": user.address,
-      "Policy Number": user.pn,
+      "Policy Number": `${user.cType || "N/A"}-${user.pn || "N/A"}/${user.year || "N/A"}`,
       "COC Number": user.coc,
       "OR Number": user.or,
       "Model": user.model,
@@ -736,295 +795,10 @@ const openEdit = (user) => {
     worksheet["!autofilter"] = { ref: `A1:T1` };
 
     XLSX.writeFile(workbook, `Alpha_Insurance_Records_${new Date().toISOString().split('T')[0]}.xlsx`);
-    setToast({ message: '📊 Excel file with formatting exported successfully!', type: 'success' });
+    setToast({ message: 'Excel file with formatting exported successfully!', type: 'success' });
   };
 
-  // COMPREHENSIVE PDF EXPORT WITH ALL FORM FIELDS INCLUDING PREMIUM AND CHARGES
-  const exportToPDF = async () => {
-    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 15;
-    let yPosition = margin;
-
-    const colors = {
-      primary: [30, 107, 71],
-      primaryDark: [22, 86, 56],
-      secondary: [245, 245, 245],
-      text: [33, 33, 33],
-      textLight: [100, 100, 100],
-      white: [255, 255, 255]
-    };
-
-    const drawPageHeader = () => {
-      yPosition = 15;
-
-      // Company name - centered, no circle
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(18);
-      doc.setTextColor(...colors.primary);
-      doc.text("ALPHA INSURANCE & SURETY COMPANY, INC.", pageWidth / 2, yPosition, { align: "center" });
-      yPosition += 6;
-
-      // Subtitle
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      doc.setTextColor(...colors.textLight);
-      yPosition += 10;
-
-      doc.setDrawColor(...colors.primary);
-      doc.setLineWidth(0.8);
-      doc.line(margin, yPosition, pageWidth - margin, yPosition);
-      doc.setLineWidth(0.3);
-      doc.line(margin, yPosition + 0.5, pageWidth - margin, yPosition + 0.5);
-      yPosition += 8;
-
-      const titleWidth = 80;
-      const titleX = (pageWidth - titleWidth) / 2;
-      doc.setFillColor(...colors.primary);
-      doc.roundedRect(titleX, yPosition - 5, titleWidth, 10, 2, 2, "F");
-      
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
-      doc.setTextColor(...colors.white);
-      doc.text("INSURANCE RECORDS LIST", pageWidth / 2, yPosition + 1, { align: "center" });
-      yPosition += 10;
-
-      const today = new Date().toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(...colors.textLight);
-      doc.text(`Generated on: ${today}`, pageWidth - margin, yPosition, { align: "right" });
-      doc.text(`Total Records: ${users.length}`, margin, yPosition);
-      yPosition += 8;
-    };
-
-    const wrapText = (text, maxWidth) => {
-      if (!text) return [''];
-      const words = String(text).split(' ');
-      const lines = [];
-      let currentLine = words[0];
-
-      for (let i = 1; i < words.length; i++) {
-        const word = words[i];
-        const width = doc.getTextWidth(currentLine + " " + word);
-        if (width < maxWidth) {
-          currentLine += " " + word;
-        } else {
-          lines.push(currentLine);
-          currentLine = word;
-        }
-      }
-      lines.push(currentLine);
-      return lines;
-    };
-
-    const availableWidth = pageWidth - margin * 2;
-    // UPDATED COLUMN WIDTHS TO INCLUDE PREMIUM AND CHARGES
-    const colWidths = [
-      availableWidth * 0.08,   // ASSURED NAME
-      availableWidth * 0.09,   // ADDRESS
-      availableWidth * 0.035,  // COC NUMBER
-      availableWidth * 0.035,  // OR NUMBER
-      availableWidth * 0.04,   // POLICY NUMBER
-      availableWidth * 0.035,  // ISSUED
-      availableWidth * 0.035,  // RECEIVED
-      availableWidth * 0.05,   // MODEL
-      availableWidth * 0.04,   // MAKE
-      availableWidth * 0.045,  // BODY TYPE
-      availableWidth * 0.035,  // COLOR
-      availableWidth * 0.045,  // PLATE NO
-      availableWidth * 0.045,  // CHASSIS NO
-      availableWidth * 0.045,  // MOTOR NO
-      availableWidth * 0.045,  // PREMIUM
-      availableWidth * 0.045,  // OTHER CHARGES
-      availableWidth * 0.045,  // DOC STAMPS
-      availableWidth * 0.04,   // E-VAT
-      availableWidth * 0.04,   // LOCAL GOVT TAX
-      availableWidth * 0.04,   // AUTH FEE
-      availableWidth * 0.055   // GRAND TOTAL
-    ];
-
-    // UPDATED HEADERS TO INCLUDE PREMIUM AND CHARGES
-    const headers = [
-      "ASSURED", "ADDRESS", "COC", "OR", "POLICY", 
-      "ISSUED", "RECV'D", "MODEL", "MAKE", "BODY", 
-      "COLOR", "PLATE", "CHASSIS", "MOTOR", "PREMIUM",
-      "OTHER", "DOC", "E-VAT", "LGT", "AUTH", "TOTAL"
-    ];
-    const headerHeight = 12;
-
-    const drawTableHeader = () => {
-      doc.setFillColor(...colors.primaryDark);
-      doc.rect(margin, yPosition, availableWidth, 1, "F");
-      
-      doc.setFillColor(...colors.primary);
-      doc.rect(margin, yPosition + 1, availableWidth, headerHeight - 1, "F");
-      
-      doc.setTextColor(...colors.white);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(6.5);
-
-      let x = margin;
-      headers.forEach((header, idx) => {
-        const textX = x + colWidths[idx] / 2;
-        const textY = yPosition + 8;
-        
-        doc.text(header, textX, textY, { 
-          align: "center",
-          maxWidth: colWidths[idx] - 2
-        });
-        
-        if (idx < headers.length - 1) {
-          doc.setDrawColor(255, 255, 255, 0.3);
-          doc.setLineWidth(0.2);
-          doc.line(x + colWidths[idx], yPosition + 2, x + colWidths[idx], yPosition + headerHeight - 2);
-        }
-        
-        x += colWidths[idx];
-      });
-      
-      yPosition += headerHeight;
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(6.5);
-      doc.setTextColor(...colors.text);
-    };
-
-    const addNewPage = () => {
-      doc.addPage();
-      yPosition = margin;
-      drawPageHeader();
-      drawTableHeader();
-    };
-
-    // Helper function to format currency for PDF (removes ₱ symbol to avoid encoding issues)
-    const formatCurrency = (value) => {
-      if (!value) return '';
-      const strValue = String(value);
-      // Remove peso sign if present (causes encoding issues in PDF)
-      return strValue.replace('₱', 'PHP ').replace('PHP PHP', 'PHP ');
-    };
-
-    drawPageHeader();
-    drawTableHeader();
-
-    users.forEach((user, rowIndex) => {
-      const rowData = [
-        user.assuredName || user.name || '',
-        user.address || '',
-        user.cocNumber || user.coc || '',
-        user.orNumber || user.or || '',
-        user.policyNumber || user.pn || '',
-        user.issued || '',
-        user.received || '',
-        user.model || '',
-        user.make || '',
-        user.bodyType || '',
-        user.color || '',
-        user.plateNo || user.plate || '',
-        user.chassisNo || '',
-        user.motorNo || '',
-        formatCurrency(user.premium),
-        formatCurrency(user.otherCharges),
-        formatCurrency(user.docStamps),
-        formatCurrency(user.eVat),
-        formatCurrency(user.localGovtTax),
-        formatCurrency(user.authFee),
-        formatCurrency(user.grandTotal)
-      ];
-
-      let maxLines = 1;
-      rowData.forEach((data, colIndex) => {
-        const lines = wrapText(String(data), colWidths[colIndex] - 2);
-        if (lines.length > maxLines) maxLines = lines.length;
-      });
-      
-      const calculatedRowHeight = Math.max(8, maxLines * 4);
-
-      if (yPosition + calculatedRowHeight > pageHeight - margin - 15) {
-        addNewPage();
-      }
-
-      xPosition = 15;
-      const rowData = [user.name, user.pn, user.coc, user.or, user.plate];
-      
-      if (rowIndex % 2 === 0) {
-        doc.setFillColor(...colors.secondary);
-        doc.rect(margin, yPosition, availableWidth, calculatedRowHeight, "F");
-      } else {
-        doc.setFillColor(...colors.white);
-        doc.rect(margin, yPosition, availableWidth, calculatedRowHeight, "F");
-      }
-
-      doc.setDrawColor(220, 220, 220);
-      doc.setLineWidth(0.1);
-      doc.line(margin, yPosition + calculatedRowHeight, pageWidth - margin, yPosition + calculatedRowHeight);
-
-      let x = margin;
-      rowData.forEach((data, colIndex) => {
-        const textX = x + 1.5;
-        let textY = yPosition + 5;
-
-        let displayData = String(data);
-        let isBold = false;
-        
-        // Bold the name and grand total
-        if (colIndex === 0 || colIndex === 20) {
-          isBold = true;
-          doc.setTextColor(...colors.text);
-        } else {
-          doc.setTextColor(...colors.text);
-        }
-
-        if (isBold) {
-          doc.setFont("helvetica", "bold");
-        } else {
-          doc.setFont("helvetica", "normal");
-        }
-
-        const lines = wrapText(displayData, colWidths[colIndex] - 3);
-        lines.forEach((line, lineIndex) => {
-          if (lineIndex > 0) textY += 3.5;
-          doc.text(line, textX, textY, {
-            align: "left",
-            maxWidth: colWidths[colIndex] - 3
-          });
-        });
-
-        x += colWidths[colIndex];
-      });
-
-      yPosition += calculatedRowHeight;
-    });
-
-    const totalPages = doc.internal.pages.length - 1;
-    for (let i = 1; i <= totalPages; i++) {
-      doc.setPage(i);
-      
-      doc.setDrawColor(200, 200, 200);
-      doc.setLineWidth(0.3);
-      doc.line(margin, pageHeight - 12, pageWidth - margin, pageHeight - 12);
-      
-      doc.setFontSize(7);
-      doc.setTextColor(...colors.textLight);
-      doc.setFont("helvetica", "normal");
-      
-      doc.text("Alpha Insurance & Surety Company, Inc.", margin, pageHeight - 8);
-      doc.text("CONFIDENTIAL DOCUMENT", pageWidth / 2, pageHeight - 8, { align: "center" });
-      doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 8, { align: "right" });
-    }
-
-    const today = new Date().toISOString().split('T')[0];
-    doc.save(`Alpha_Insurance_Records_${today}.pdf`);
-    setToast({ message: '📄 Complete insurance records with charges exported successfully!', type: 'success' });
-  };
-
-// Loading state
+  // Loading state
   if (isLoading) {
     return (
       <div className="container" style={{ 
@@ -1056,7 +830,30 @@ const openEdit = (user) => {
   }
 
   return (
-    <div className="container" style={{ marginTop: '95px' }}>
+    <>
+      {/* Navigation Bar with Logo and Logout - Same style as Menu */}
+      <div style={{position: 'fixed', top: 0, left: 0, right: 0, maxWidth: '100%', margin: '0', padding: '0', width: '100%', zIndex: 999, boxShadow: '0 8px 24px rgba(45, 80, 22, 0.12)'}}>
+        <div style={{background: '#fff', borderRadius: '2px', padding: '12px 20px', boxShadow: '0 8px 24px rgba(45, 80, 22, 0.12)', border: 'none', position: 'relative', overflow: 'visible'}}>
+          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', position: 'relative', zIndex: 1}}>
+            {/* Left: logo + title */}
+            <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
+              <div style={{flexShrink: 0, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                <img src="/images/alpha.png" alt="Alpha Logo" style={{height: '60px', objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.08))'}} />
+              </div>
+              <div style={{display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
+                <div style={{display: 'flex', alignItems: 'baseline', gap: '8px'}}>
+                  <h1 style={{fontSize: '22px', fontWeight: 900, color: '#1E6B47', margin: 0, letterSpacing: '-0.4px'}}>Records Management</h1>
+                </div>
+                <p style={{fontSize: '12px', color: '#1E6B47', margin: 0, fontWeight: 500}}>Motor Car Insurance · View and manage all policies</p>
+              </div>
+            </div>
+
+
+          </div>
+        </div>
+      </div>
+
+      <div className="container" style={{ marginTop: '95px' }}>
       <style>{`
         @keyframes fadeIn {
           from { opacity: 0; }
@@ -1191,12 +988,27 @@ const openEdit = (user) => {
           outline: none;
           box-shadow: 0 0 0 3px rgba(30, 107, 71, 0.2);
         }
+
+        .logout-btn {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        .logout-btn:hover {
+          background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+          box-shadow: 0 8px 28px rgba(220, 38, 38, 0.45), 0 0 0 4px rgba(255, 255, 255, 0.3) !important;
+          filter: brightness(1.05);
+        }
+
+        .logout-btn:active {
+          filter: brightness(0.95);
+          box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3) !important;
+        }
       `}</style>
 
       {/* Navigation Header */}
       <div className="nav-header-container" style={{position: 'fixed', top: 0, left: 0, right: 0, width: '100%', maxWidth: '100%', margin: '0', padding: '0', zIndex: 999, boxShadow: '0 8px 24px rgba(45, 80, 22, 0.12)'}}>
         <div className="nav-header" style={{background: '#fff', borderRadius: '2px', padding: '12px 20px', boxShadow: '0 8px 24px rgba(45, 80, 22, 0.12)', border: 'none', position: 'relative', overflow: 'visible'}}>
-          <div style={{display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '24px', position: 'relative', zIndex: 1}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '24px', position: 'relative', zIndex: 1}}>
             <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
               <div className="logo" style={{flexShrink: 0, padding: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                 <img src="/images/alpha.png" alt="Alpha Logo" style={{height: '60px', objectFit: 'contain', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.08))'}} />
@@ -1207,6 +1019,18 @@ const openEdit = (user) => {
               </div>
             </div>
           </div>
+          <button 
+            className="btn logout-btn" 
+            onClick={handleLogout}
+            style={logoutButtonStyle}
+            title="Logout"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -1249,42 +1073,26 @@ const openEdit = (user) => {
           >
             <FiDownload size={18} /> Excel
           </button>
-          <button 
-            className="btn export-btn" 
-            onClick={exportToPDF}
-            style={{
-              ...noBorderStyle,
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "8px 16px",
-              backgroundColor: "#EF4444",
-              color: "white",
-              borderRadius: "4px",
-              fontSize: "14px",
-              fontWeight: "600",
-              cursor: "pointer",
-              transition: "all 0.3s"
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = "#DC2626"}
-            onMouseLeave={(e) => e.target.style.backgroundColor = "#EF4444"}
-            title="Export to PDF"
-          >
-            <FiDownload size={18} /> PDF
-          </button>
         </div>
       </div>
 
       <div className="search-bar">
-        <div className="date-group">
+        <div className="date-group" style={{ flexWrap: "nowrap" }}>
           <div className="field">
             <label>From</label>
             <input 
               type="date" 
               value={dateFrom}
               onChange={(e) => {
-                setDateFrom(e.target.value);
-                if (e.target.value === "" && dateTo === "" && searchInput.trim() === "") {
+                const newFromDate = e.target.value;
+                setDateFrom(newFromDate);
+                
+                // Only trigger filter if both dates will be set
+                if (newFromDate !== "" && dateTo !== "") {
+                  // Both dates are populated - automatically filter
+                  performDateRangeFilter(users, newFromDate, dateTo, searchInput);
+                } else if (newFromDate === "" && dateTo === "" && searchInput.trim() === "") {
+                  // Clear all filters if everything is empty
                   setFilteredUsers([]);
                   setIsSearchActive(false);
                   setCurrentPage(1);
@@ -1299,8 +1107,15 @@ const openEdit = (user) => {
               type="date" 
               value={dateTo}
               onChange={(e) => {
-                setDateTo(e.target.value);
-                if (e.target.value === "" && dateFrom === "" && searchInput.trim() === "") {
+                const newToDate = e.target.value;
+                setDateTo(newToDate);
+                
+                // Only trigger filter if both dates will be set
+                if (dateFrom !== "" && newToDate !== "") {
+                  // Both dates are populated - automatically filter
+                  performDateRangeFilter(users, dateFrom, newToDate, searchInput);
+                } else if (dateFrom === "" && newToDate === "" && searchInput.trim() === "") {
+                  // Clear all filters if everything is empty
                   setFilteredUsers([]);
                   setIsSearchActive(false);
                   setCurrentPage(1);
@@ -1309,6 +1124,29 @@ const openEdit = (user) => {
             />
           </div>
 
+          <button
+            onClick={handleResetFilters}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "11px",
+              backgroundColor: "#ef4444",
+              color: "white",
+              border: "none",
+              borderRadius: "6px",
+              cursor: "pointer",
+              transition: "all 0.3s ease",
+              alignSelf: "flex-end",
+              gap: "6px"
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = "#dc2626"}
+            onMouseLeave={(e) => e.target.style.backgroundColor = "#ef4444"}
+            title="Reset filters and show all records"
+          >
+            <FiRotateCcw size={16} />
+          </button>
+
           <div className="field search-field">
             <label>Search</label>
             <div className="search-input-group" style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
@@ -1316,32 +1154,31 @@ const openEdit = (user) => {
                 type="text" 
                 value={searchInput}
                 onChange={(e) => {
-                  setSearchInput(e.target.value);
-                  if (e.target.value.trim() === "" && dateFrom === "" && dateTo === "") {
+                  const newSearchValue = e.target.value.toUpperCase();
+                  setSearchInput(newSearchValue);
+                  
+                  // Clear all filters if everything is empty
+                  if (newSearchValue.trim() === "" && dateFrom === "" && dateTo === "") {
+                    setFilteredUsers([]);
+                    setIsSearchActive(false);
+                    setCurrentPage(1);
+                  } else if (dateFrom !== "" && dateTo !== "") {
+                    // Both dates are set - use date range filter (which includes search filter)
+                    performDateRangeFilter(users, dateFrom, dateTo, newSearchValue);
+                  } else if (newSearchValue.trim() !== "") {
+                    // Only search term is set - use search filter
+                    performSearch(users, newSearchValue);
+                  } else {
+                    // Only one date is set or nothing - clear filters
                     setFilteredUsers([]);
                     setIsSearchActive(false);
                     setCurrentPage(1);
                   }
                 }}
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSearch();
-                  }
-                }}
                 placeholder="Enter name or plate no..."
                 className="search-input"
-                style={{ flex: 1, minWidth: "200px" }}
+                style={{ flex: 1, minWidth: "200px", textTransform: "uppercase" }}
               />
-              <button 
-                className="btn search-btn" 
-                onClick={handleSearch}
-                style={{
-                  ...noBorderStyle,
-                  whiteSpace: "nowrap"
-                }}
-              >
-              Search
-              </button>
             </div>
           </div>
         </div>
@@ -1363,7 +1200,7 @@ const openEdit = (user) => {
             {currentUsers.map((u) => (
               <tr key={u.id}>
                 <td>{u.name}</td>
-                <td>{u.pn}</td>
+                <td>{`${u.cType || "N/A"}-${u.pn || "N/A"}/${u.year || "N/A"}`}</td>
                 <td>{u.coc}</td>
                 <td>{u.or}</td>
                 <td>{u.plate}</td>
@@ -1649,6 +1486,7 @@ const openEdit = (user) => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

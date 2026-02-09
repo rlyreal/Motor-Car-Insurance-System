@@ -4,6 +4,20 @@ import { FiEye, FiUser, FiFileText, FiHash, FiCreditCard } from "react-icons/fi"
 const ViewModal = ({ selectedUser, onClose, premiumModalBackdrop, premiumModal, premiumModalHeader, premiumModalTitle, premiumModalBody, premiumModalFooter, secondaryButton, infoBadge, fieldGroup, fieldLabel, fieldValue, divider }) => {
   if (!selectedUser) return null;
 
+  // Helper function to format YYYY-MM-DD to MM/DD/YYYY
+  const formatDateToDisplay = (dateString) => {
+    if (!dateString) return "N/A";
+    
+    // Check if date is in YYYY-MM-DD format
+    if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [year, month, day] = dateString.split('-');
+      return `${month}/${day}/${year}`;
+    }
+    
+    // If already formatted or different format, return as-is
+    return dateString;
+  };
+
   const twoColumnContainer = {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
@@ -87,6 +101,14 @@ const ViewModal = ({ selectedUser, onClose, premiumModalBackdrop, premiumModal, 
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
+                <FiFileText size={14} />
+                Type
+              </label>
+              <div style={fieldValue} className="field-value-hover">{selectedUser.cType || "N/A"}</div>
+            </div>
+
+            <div style={compactFieldGroup}>
+              <label style={fieldLabel}>
                  Year
               </label>
               <div style={fieldValue} className="field-value-hover">{selectedUser.year || "N/A"}</div>
@@ -106,28 +128,28 @@ const ViewModal = ({ selectedUser, onClose, premiumModalBackdrop, premiumModal, 
               <label style={fieldLabel}>
                  From Date
               </label>
-              <div style={fieldValue} className="field-value-hover">{selectedUser.fromDate || "N/A"}</div>
+              <div style={fieldValue} className="field-value-hover">{formatDateToDisplay(selectedUser.fromDate)}</div>
             </div>
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
                  To Date
               </label>
-              <div style={fieldValue} className="field-value-hover">{selectedUser.toDate || "N/A"}</div>
+              <div style={fieldValue} className="field-value-hover">{formatDateToDisplay(selectedUser.toDate)}</div>
             </div>
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
                  Issued Date
               </label>
-              <div style={fieldValue} className="field-value-hover">{selectedUser.issued || "N/A"}</div>
+              <div style={fieldValue} className="field-value-hover">{formatDateToDisplay(selectedUser.issued)}</div>
             </div>
 
             <div style={compactFieldGroup}>
               <label style={fieldLabel}>
                  Received Date
               </label>
-              <div style={fieldValue} className="field-value-hover">{selectedUser.received || "N/A"}</div>
+              <div style={fieldValue} className="field-value-hover">{formatDateToDisplay(selectedUser.received)}</div>
             </div>
           </div>
 
